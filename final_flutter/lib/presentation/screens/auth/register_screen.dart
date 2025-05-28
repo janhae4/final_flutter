@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_event.dart';
@@ -19,6 +20,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _onRegisterPressed() {
     final phone = phoneController.text.trim();
     final password = passwordController.text.trim();
+
+    if (phone.length != 10 || !RegExp(r'^\d{10}$').hasMatch(phone)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number must be 10 digits.')),
+      );
+      return;
+    }
     context.read<AuthBloc>().add(RegisterRequested(phone, password));
   }
 
@@ -35,9 +43,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
               (_) => false,
             );
           } else if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -49,6 +57,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: phoneController,
                   decoration: const InputDecoration(labelText: 'Phone'),
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
                 ),
                 TextField(
                   controller: passwordController,

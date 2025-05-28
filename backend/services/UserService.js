@@ -5,9 +5,14 @@ exports.getAllUsers = async () => User.find();
 exports.getUser = async (id) => User.findById(id);
 
 exports.createUser = async (data) => {
-    if (await User.findOne({ phone: data.phone })) throw new Error('Phone number already exists');
+    if (await User.findOne({ username: data.username })) throw new Error('Phone number already exists');
     if (await User.findOne({ email: data.email })) throw new Error('Email already exists');
-    return User.create(data);
+    const email = `${data.username}@gmail.com`;
+    return User.create({
+        phone: data.username,
+        password: data.password,
+        email
+    });
 }
 
 exports.updateUser = async (id, data) => User.findByIdAndUpdate(id, data);
@@ -20,6 +25,7 @@ exports.login = async (username, password) => {
     });
     if (!user) throw new Error('User not found');
     if (user.password !== password) throw new Error('Invalid password');
+    
     return user;
 };
 

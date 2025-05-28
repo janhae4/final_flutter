@@ -22,15 +22,18 @@ class AuthRepository {
     final res = await http.post(
       Uri.parse('$backendUrl/login'),
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'phone': phone, 'password': password}),
+      body: jsonEncode({'username': phone, 'password': password}),
     );
 
     if (res.statusCode != 200) {
-      throw Exception('Login failed');
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
+      throw Exception(errorMessage);
     }
 
     final json = jsonDecode(res.body);
     final token = json['token'];
+    print(token);
+    print(json['user']);
     await saveToken(token);
     return UserModel.fromJson(json['user']);
   }
@@ -42,8 +45,9 @@ class AuthRepository {
       body: jsonEncode({'username': phone, 'password': password}),
     );
 
-    if (res.statusCode != 200) {
-      throw Exception('Registration failed');
+    if (res.statusCode != 201) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Register failed';
+      throw Exception(errorMessage);
     }
 
     final json = jsonDecode(res.body);

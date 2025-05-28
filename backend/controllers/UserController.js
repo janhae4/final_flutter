@@ -1,4 +1,6 @@
 const UserService = require('../services/UserService');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
 exports.createUser = async (req, res) => {
     try {
@@ -61,7 +63,8 @@ exports.login = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json(user);
+        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+        res.json({user, token});
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
