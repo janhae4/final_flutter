@@ -17,7 +17,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Gửi sự kiện AppStarted để kiểm tra token
     context.read<AuthBloc>().add(AppStarted());
   }
 

@@ -1,5 +1,6 @@
+const { base } = require('../models/User');
 const UserService = require('../services/UserService');
-const jwt = require('jsonwebtoken');
+
 require('dotenv').config();
 
 exports.createUser = async (req, res) => {
@@ -22,11 +23,13 @@ exports.getAllUsers = async (req, res) => {
 
 exports.getUser = async (req, res) => {
     try {
-        const user = await UserService.getUser(req.params.id);
+        console.log("===============")
+        console.log(req.user.id)
+        const user = await UserService.getUser(req.user.id);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json(user);
+        res.json({ user });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -34,11 +37,11 @@ exports.getUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
     try {
-        const user = await UserService.updateUser(req.params.id, req.body);
+        const user = await UserService.updateUser(req.user.id, req.body);
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-        res.json(user);
+        res.status(200).json({ user });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -57,14 +60,9 @@ exports.deleteUser = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-    console.log(req.body);
     try {
-        const user = await UserService.login(req.body.username, req.body.password);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-        res.json({user, token});
+        const result = await UserService.login(req.body.username, req.body.password);
+        res.json(result);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -76,5 +74,71 @@ exports.register = async (req, res) => {
         res.status(201).json(user);
     } catch (error) {
         res.status(400).json({ message: error.message });
+    }
+}
+
+exports.changePassword = async (req, res) => {
+    try {
+        const user = await UserService.changePassword(req.user.id, req.body);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.generate2FA = async (req, res) => {
+    try {
+        const user = await UserService.setup2FA(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+exports.enable2FA = async (req, res) => {
+    try {
+        const r = await UserService.enable2FA(req.user.id, req.body.code);
+        res.status(200).json({ backupCodes: r });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+exports.verify2FA = async (req, res) => {
+    try {
+        const user = await UserService.verify2FA(req.user.id, req.body.code);
+        res.status(200).json({ message: '2FA verification successful', token: user.token });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+exports.disable2FA = async (req, res) => {
+    try {
+        const user = await UserService.disable2FA(req.user.id, req.body.password, req.body.code);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ message: '2FA disabled successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+exports.uploadImageToBackend = async (req, res) => {
+    try {
+        const user = await UserService.uploadImageToBackend(req.user.id, req.file.path);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ message: 'Image uploaded successfully', user });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 }

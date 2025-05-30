@@ -3,15 +3,21 @@ const app = express();
 const cors = require('cors');
 const AuthRoute = require('./routes/AuthRoute');
 const { connectDb } = require('./db/db');
+const http = require('http');
+const { initSocket } = require('./db/websocket');
+const path = require('path');
 
 app.use(cors());
 app.use(express.json());
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/auth", AuthRoute)
 
+
 const startServer = async () => {
+    const server = http.createServer(app);
+    initSocket(server);
     await connectDb();
-    app.listen(3000, () => console.log('Server is running on port 3000'));
+    server.listen(3000, () => console.log('Server is running on port 3000'));
 };
 
 startServer();

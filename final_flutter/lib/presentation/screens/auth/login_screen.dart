@@ -16,11 +16,59 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+  final TextEditingController _otpController =
+      TextEditingController(); // ✅ Fix 1
 
   void _onLoginPressed() {
     final phone = usernameController.text.trim();
     final password = passwordController.text.trim();
     context.read<AuthBloc>().add(LoginRequested(phone, password));
+  }
+
+  void _showOtpDialog(String token) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Two-Factor Authentication'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Enter the verification code from your Authenticator app or backup code:',
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _otpController,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: const InputDecoration(
+                  labelText: 'OTP Code',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final otpCode = _otpController.text.trim();
+                if (otpCode.isNotEmpty) {
+                  context.read<AuthBloc>().add(SubmitTwoFactor(otpCode, token));
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Verify'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -35,9 +83,11 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
           } else if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
+          } else if (state is TwoFactorRequired) {
+            _showOtpDialog(state.tempToken);
           }
         },
         builder: (context, state) {
@@ -47,7 +97,9 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 TextField(
                   controller: usernameController,
-                  decoration: const InputDecoration(labelText: 'Phone or Email'),
+                  decoration: const InputDecoration(
+                    labelText: 'Phone or Email',
+                  ),
                   keyboardType: TextInputType.phone,
                 ),
                 TextField(

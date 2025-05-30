@@ -1,9 +1,13 @@
+import 'package:final_flutter/data/models/user_model.dart';
+import 'package:final_flutter/logic/auth/auth_state.dart';
 import 'package:final_flutter/presentation/screens/home/inbox_screen.dart';
+import 'package:final_flutter/presentation/screens/home/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_event.dart';
 import 'package:final_flutter/presentation/screens/auth/login_screen.dart';
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -13,6 +17,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
+  UserModel? _user;
   final List<Widget> _screens = [
     const InboxScreen(),
     // const StarredScreen(),
@@ -28,6 +33,18 @@ class _HomeScreenState extends State<HomeScreen> {
     'Drafts',
     'Trash',
   ];
+
+
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    context.read<AuthBloc>().add(LoadProfile());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,10 +66,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 _logout(context);
               } else if (value == 'settings') {
                 _navigateToSettings(context);
+              } else {
+                _navigateToProfile(context);
               }
             },
             itemBuilder: (BuildContext context) {
-              return {'Settings', 'Logout'}.map((String choice) {
+              return {'Profile', 'Settings', 'Logout'}.map((String choice) {
                 return PopupMenuItem<String>(
                   value: choice.toLowerCase(),
                   child: Text(choice),
@@ -62,34 +81,45 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToCompose(context),
+        child: const Icon(Icons.edit),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
+          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Starred'),
+          BottomNavigationBarItem(icon: Icon(Icons.send), label: 'Sent'),
+          BottomNavigationBarItem(icon: Icon(Icons.drafts), label: 'Drafts'),
+          BottomNavigationBarItem(icon: Icon(Icons.delete), label: 'Trash'),
+        ],
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
+              decoration: BoxDecoration(color: Colors.blue),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundImage: NetworkImage('https://example.com/profile.jpg'),
+                    backgroundImage: NetworkImage(
+                      'https://example.com/profile.jpg',
+                    ),
                   ),
                   SizedBox(height: 10),
                   Text(
                     'John Doe',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
                   Text(
                     'john.doe@example.com',
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                    style: TextStyle(color: Colors.white),
                   ),
                 ],
               ),
@@ -171,40 +201,26 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToCompose(context),
-        child: const Icon(Icons.edit),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inbox),
-            label: 'Inbox',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star),
-            label: 'Starred',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.send),
-            label: 'Sent',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.drafts),
-            label: 'Drafts',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.delete),
-            label: 'Trash',
-          ),
-        ],
+      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is LoadProfileSuccess) {
+            setState(() {
+              _user = state.user;
+            });
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
+            );
+          } else if (state is Unauthenticated) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+            );
+          }
+        },
+        builder: (context, state) {
+          return IndexedStack(index: _currentIndex, children: _screens);
+        },
       ),
     );
   }
@@ -223,6 +239,13 @@ class _HomeScreenState extends State<HomeScreen> {
     //   context,
     //   MaterialPageRoute(builder: (context) => const SettingsScreen()),
     // );
+  }
+
+  void _navigateToProfile(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ProfileScreen(user: _user,)),
+    );
   }
 
   void _navigateToCompose(BuildContext context) {
@@ -378,9 +401,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshEmails() {
     // Implement refresh functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Refreshing emails...')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Refreshing emails...')));
   }
 
   void _createNewLabel(BuildContext context) {
@@ -392,9 +415,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: const Text('Create New Label'),
           content: TextField(
             onChanged: (value) => newLabel = value,
-            decoration: const InputDecoration(
-              hintText: 'Enter label name',
-            ),
+            decoration: const InputDecoration(hintText: 'Enter label name'),
           ),
           actions: [
             TextButton(

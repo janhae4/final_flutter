@@ -1,3 +1,4 @@
+import 'package:final_flutter/presentation/screens/auth/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,9 +17,10 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final phoneController = TextEditingController();
   final passwordController = TextEditingController();
-
+  final nameController = TextEditingController();
   void _onRegisterPressed() {
     final phone = phoneController.text.trim();
+    final name = nameController.text.trim();
     final password = passwordController.text.trim();
 
     if (phone.length != 10 || !RegExp(r'^\d{10}$').hasMatch(phone)) {
@@ -27,7 +29,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       return;
     }
-    context.read<AuthBloc>().add(RegisterRequested(phone, password));
+    context.read<AuthBloc>().add(RegisterRequested(name, phone, password));
   }
 
   @override
@@ -37,9 +39,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Registered successfully!, Please Login'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
+              MaterialPageRoute(builder: (_) => LoginScreen()),
               (_) => false,
             );
           } else if (state is AuthError) {
@@ -53,6 +62,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  keyboardType: TextInputType.name,
+                ),
                 TextField(
                   controller: phoneController,
                   decoration: const InputDecoration(labelText: 'Phone'),
