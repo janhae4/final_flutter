@@ -7,7 +7,7 @@ import 'package:final_flutter/presentation/screens/auth/login_screen.dart';
 import 'package:final_flutter/presentation/screens/home/home_screen.dart'; // bạn sẽ tạo sau
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({Key? key}) : super(key: key);
+  const SplashScreen({super.key});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();

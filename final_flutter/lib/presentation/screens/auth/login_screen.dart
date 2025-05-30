@@ -16,8 +16,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
-  final TextEditingController _otpController =
-      TextEditingController(); // ✅ Fix 1
+  final TextEditingController _otpController = TextEditingController();
 
   void _onLoginPressed() {
     final phone = usernameController.text.trim();

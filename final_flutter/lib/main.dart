@@ -1,11 +1,12 @@
 import 'package:final_flutter/config/app_theme.dart';
+import 'package:final_flutter/logic/auth/auth_bloc.dart';
+import 'package:final_flutter/logic/auth/auth_repository.dart';
 import 'package:final_flutter/presentation/screens/auth/splash_screen.dart';
 import 'package:final_flutter/presentation/screens/home/home_screen.dart';
 import 'package:final_flutter/presentation/screens/home/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:final_flutter/logic/auth/auth_bloc.dart';
-import 'package:final_flutter/logic/auth/auth_repository.dart';
+import 'app.dart';
 
 void main() {
   final authRepository = AuthRepository();
