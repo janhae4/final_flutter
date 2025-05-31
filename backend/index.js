@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 const AuthRoute = require('./routes/AuthRoute');
+const EmailRoute = require('./routes/EmailRoute');
 const { connectDb } = require('./db/db');
 const http = require('http');
 const { initSocket } = require('./db/websocket');
@@ -11,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/auth", AuthRoute)
-
+app.use("/api/email", EmailRoute);
 
 const startServer = async () => {
     const server = http.createServer(app);

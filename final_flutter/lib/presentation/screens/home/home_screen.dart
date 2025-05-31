@@ -1,6 +1,10 @@
+import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
-import 'package:final_flutter/presentation/screens/home/inbox_screen.dart';
+import 'package:final_flutter/logic/email/email_bloc.dart';
+import 'package:final_flutter/logic/email/email_repository.dart';
+import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
+import 'package:final_flutter/presentation/screens/email/inbox_screen.dart';
 import 'package:final_flutter/presentation/screens/home/profile_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,13 +22,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 0;
   UserModel? _user;
-  final List<Widget> _screens = [
-    const InboxScreen(),
-    // const StarredScreen(),
-    // const SentScreen(),
-    // const DraftsScreen(),
-    // const TrashScreen(),
-  ];
 
   final List<String> _appBarTitles = [
     'Inbox',
@@ -99,25 +96,25 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
+            DrawerHeader(
+              decoration: const BoxDecoration(color: AppColors.primary),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   CircleAvatar(
                     radius: 30,
                     backgroundImage: NetworkImage(
-                      'https://example.com/profile.jpg',
+                      'http://localhost:3000/${_user?.avatarUrl}',
                     ),
                   ),
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Text(
-                    'John Doe',
+                    _user?.name ?? '',
                     style: TextStyle(color: Colors.white, fontSize: 18),
                   ),
                   Text(
-                    'john.doe@example.com',
-                    style: TextStyle(color: Colors.white),
+                    _user?.email ?? '',
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ],
               ),
@@ -205,10 +202,6 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() {
               _user = state.user;
             });
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomeScreen()),
-            );
           } else if (state is Unauthenticated) {
             Navigator.pushReplacement(
               context,
@@ -217,7 +210,14 @@ class _HomeScreenState extends State<HomeScreen> {
           }
         },
         builder: (context, state) {
-          return IndexedStack(index: _currentIndex, children: _screens);
+          if (_user == null) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          return InboxScreen(
+            key: ValueKey(_currentIndex),
+            user: _user!,
+            tabIndex: _currentIndex,
+          );
         },
       ),
     );
@@ -247,10 +247,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToCompose(BuildContext context) {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => const ComposeScreen()),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ComposeEmailScreen(user: _user)),
+    );
   }
 
   void _showSearchDialog(BuildContext context) {

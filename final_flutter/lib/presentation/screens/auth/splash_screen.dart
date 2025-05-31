@@ -1,10 +1,12 @@
+import 'package:final_flutter/logic/email/email_bloc.dart';
+import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_event.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
 import 'package:final_flutter/presentation/screens/auth/login_screen.dart';
-import 'package:final_flutter/presentation/screens/home/home_screen.dart'; // bạn sẽ tạo sau
+import 'package:final_flutter/presentation/screens/home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -38,9 +40,7 @@ class _SplashScreenState extends State<SplashScreen> {
           }
         },
         builder: (context, state) {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         },
       ),
     );

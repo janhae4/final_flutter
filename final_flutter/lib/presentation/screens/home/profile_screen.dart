@@ -64,6 +64,125 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: const Text(
+          'Profile',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        elevation: 0,
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+      ),
+      body: BlocConsumer<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthError) {
+            _showErrorSnackBar(state.message);
+          }
+          if (state is UpdateProfile) {
+            setState(() {
+              user = state.user;
+            });
+            nameController.text = user?.name ?? '';
+            emailController.text = user?.email ?? '';
+            phoneController.text = user?.phone ?? '';
+          }
+          if (state is UpdateError) {
+            _showErrorSnackBar(state.message);
+          }
+          if (state is UpdateSuccess) {
+            _showSuccessSnackBar(state.message);
+          }
+          if (state is QRCodeGenerated) {
+            _showTwoStepVerificationDialog(
+              context,
+              state.qrCodeUrl,
+              state.entryKey,
+            );
+          }
+          if (state is TwoFactorEnabled) {
+            setState(() {
+              twoStepEnabled = true;
+            });
+            _showBackupCodesDialog(state.backupCodes);
+          }
+          if (state is TwoFactorDisabled) {
+            setState(() {
+              twoStepEnabled = false;
+            });
+          }
+        },
+        builder: (context, state) {
+          if (isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(color: primaryColor),
+            );
+          }
+
+          if (user == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Unable to load user information',
+                    style: TextStyle(fontSize: 16, color: textSecondary),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = constraints.maxWidth > 1000;
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height - 100,
+                  ),
+                  child:
+                      isWide
+                          ? IntrinsicHeight(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 300,
+                                  child: _buildProfileSection(),
+                                ),
+                                SizedBox(
+                                  width: 600,
+                                  child: _buildSettingsSection(),
+                                ),
+                              ],
+                            ),
+                          )
+                          : Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _buildProfileSection(),
+                              const SizedBox(height: 20),
+                              _buildSettingsSection(),
+                            ],
+                          ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source, imageQuality: 80);
@@ -1199,125 +1318,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: accentColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        elevation: 0,
-        backgroundColor: primaryColor,
-        foregroundColor: Colors.white,
-        centerTitle: true,
-      ),
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthError) {
-            _showErrorSnackBar(state.message);
-          }
-          if (state is UpdateProfile) {
-            setState(() {
-              user = state.user;
-            });
-            nameController.text = user?.name ?? '';
-            emailController.text = user?.email ?? '';
-            phoneController.text = user?.phone ?? '';
-          }
-          if (state is UpdateError) {
-            _showErrorSnackBar(state.message);
-          }
-          if (state is UpdateSuccess) {
-            _showSuccessSnackBar(state.message);
-          }
-          if (state is QRCodeGenerated) {
-            _showTwoStepVerificationDialog(
-              context,
-              state.qrCodeUrl,
-              state.entryKey,
-            );
-          }
-          if (state is TwoFactorEnabled) {
-            setState(() {
-              twoStepEnabled = true;
-            });
-            _showBackupCodesDialog(state.backupCodes);
-          }
-          if (state is TwoFactorDisabled) {
-            setState(() {
-              twoStepEnabled = false;
-            });
-          }
-        },
-        builder: (context, state) {
-          if (isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryColor),
-            );
-          }
-
-          if (user == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Unable to load user information',
-                    style: TextStyle(fontSize: 16, color: textSecondary),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 1000;
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height - 100,
-                  ),
-                  child:
-                      isWide
-                          ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 300,
-                                  child: _buildProfileSection(),
-                                ),
-                                SizedBox(
-                                  width: 600,
-                                  child: _buildSettingsSection(),
-                                ),
-                              ],
-                            ),
-                          )
-                          : Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              _buildProfileSection(),
-                              const SizedBox(height: 20),
-                              _buildSettingsSection(),
-                            ],
-                          ),
-                ),
-              );
-            },
-          );
-        },
       ),
     );
   }
