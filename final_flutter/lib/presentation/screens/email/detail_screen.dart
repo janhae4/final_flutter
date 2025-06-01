@@ -15,8 +15,7 @@ class EmailDetailScreen extends StatefulWidget {
   final UserModel? user;
   final String id;
 
-  const EmailDetailScreen({Key? key, required this.user, required this.id})
-    : super(key: key);
+  const EmailDetailScreen({super.key, required this.user, required this.id});
 
   @override
   State<EmailDetailScreen> createState() => _EmailDetailScreenState();
@@ -29,7 +28,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   late AnimationController _fabAnimationController;
   late AnimationController _headerAnimationController;
   bool _showMetadata = false;
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void initState() {
@@ -543,7 +542,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                   ),
                   contentPadding: EdgeInsets.zero,
                 );
-              }).toList(),
+              }),
             ],
           ),
         ),

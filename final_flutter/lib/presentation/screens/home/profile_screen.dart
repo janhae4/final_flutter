@@ -11,7 +11,6 @@ import 'package:final_flutter/logic/auth/auth_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:final_flutter/presentation/widget/profile_backupcode.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -1001,7 +1000,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 user?.avatarUrl != null &&
                                 user!.avatarUrl!.isNotEmpty)
                             ? NetworkImage(
-                              'http://localhost:3000/' + user!.avatarUrl!,
+                              'http://localhost:3000/${user!.avatarUrl!}',
                             )
                             : null,
                     child:

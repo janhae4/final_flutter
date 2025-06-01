@@ -1,5 +1,4 @@
 import 'package:final_flutter/config/app_theme.dart';
-import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
@@ -12,8 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class InboxScreen extends StatefulWidget {
   final UserModel? user;
   final int tabIndex;
-  const InboxScreen({Key? key, required this.user, required this.tabIndex})
-    : super(key: key);
+  const InboxScreen({super.key, required this.user, required this.tabIndex});
 
   @override
   _InboxScreenState createState() => _InboxScreenState();
@@ -82,7 +80,7 @@ class _InboxScreenState extends State<InboxScreen> {
     return SliverToBoxAdapter(
       child: Container(
         height: 60,
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         child: ListView.builder(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -92,28 +90,25 @@ class _InboxScreenState extends State<InboxScreen> {
             final isSelected = filter == _selectedFilter;
 
             return Padding(
-              padding: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.only(right: 16),
               child: FilterChip(
                 label: Text(
                   filter,
                   style: TextStyle(
-                    color:
-                        isSelected
-                            ? AppColors.textOnPrimary
-                            : AppColors.textPrimary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? Colors.white : AppColors.primary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                   ),
                 ),
                 selected: isSelected,
                 selectedColor: AppColors.primary,
-                backgroundColor: AppColors.surface,
-                checkmarkColor: AppColors.textOnPrimary,
+                backgroundColor: Colors.white,
+                checkmarkColor: Colors.white,
                 side: BorderSide(
                   color: isSelected ? AppColors.primary : AppColors.border,
                 ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 onSelected: (selected) {
                   setState(() => _selectedFilter = filter);
-                  // context.read<EmailBloc>().add(FilterEmailsEvent(filter));
                 },
               ),
             );
@@ -151,39 +146,42 @@ class _InboxScreenState extends State<InboxScreen> {
 
   Widget _buildShimmerEmailItem() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        color: Colors.white,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 48,
+                    height: 48,
                     decoration: BoxDecoration(
                       color: AppColors.divider,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           width: double.infinity,
-                          height: 16,
+                          height: 18,
                           decoration: BoxDecoration(
                             color: AppColors.divider,
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 10),
                         Container(
-                          width: 100,
+                          width: 120,
                           height: 12,
                           decoration: BoxDecoration(
                             color: AppColors.divider,
@@ -220,22 +218,25 @@ class _InboxScreenState extends State<InboxScreen> {
 
   Widget _buildEmailItem(EmailResponseModel email) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Card(
-        elevation: email.isRead ? 1 : 3,
-        color: email.isRead ? AppColors.surface : AppColors.unreadBackground,
+        elevation: email.isRead ? 1 : 4,
+        color: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shadowColor: AppColors.primary.withOpacity(0.08),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           onTap: () => _openEmail(email.id!),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSenderAvatar(email.sender!),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,10 +247,7 @@ class _InboxScreenState extends State<InboxScreen> {
                                 child: Text(
                                   email.sender!,
                                   style: TextStyle(
-                                    fontWeight:
-                                        email.isRead
-                                            ? FontWeight.w500
-                                            : FontWeight.w700,
+                                    fontWeight: email.isRead ? FontWeight.w500 : FontWeight.bold,
                                     fontSize: 16,
                                     color: AppColors.textPrimary,
                                   ),
@@ -269,11 +267,8 @@ class _InboxScreenState extends State<InboxScreen> {
                           Text(
                             email.subject.toString().trim(),
                             style: TextStyle(
-                              fontWeight:
-                                  email.isRead
-                                      ? FontWeight.w400
-                                      : FontWeight.w600,
-                              fontSize: 14,
+                              fontWeight: email.isRead ? FontWeight.w400 : FontWeight.w600,
+                              fontSize: 15,
                               color: AppColors.textPrimary,
                             ),
                             maxLines: 1,
@@ -284,43 +279,36 @@ class _InboxScreenState extends State<InboxScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
                 Text(
                   email.plainTextContent.toString().trim(),
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     color: AppColors.textSecondary,
-                    height: 1.3,
+                    height: 1.4,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Row(
                   children: [
                     if (email.attachments.isNotEmpty)
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                         decoration: BoxDecoration(
-                          color: AppColors.info.withAlpha((255 * 0.1).toInt()),
-                          borderRadius: BorderRadius.circular(12),
+                          color: AppColors.info.withAlpha((255 * 0.08).toInt()),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.attach_file,
-                              size: 14,
-                              color: AppColors.info,
-                            ),
+                            const Icon(Icons.attach_file, size: 16, color: AppColors.info),
                             const SizedBox(width: 4),
                             Text(
                               '${email.attachments.length}',
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 13,
                                 color: AppColors.info,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -332,11 +320,8 @@ class _InboxScreenState extends State<InboxScreen> {
                     IconButton(
                       icon: Icon(
                         email.starred ? Icons.star : Icons.star_border,
-                        color:
-                            email.starred
-                                ? AppColors.starColor
-                                : AppColors.textTertiary,
-                        size: 20,
+                        color: email.starred ? AppColors.starColor : AppColors.textTertiary,
+                        size: 22,
                       ),
                       onPressed: () => _toggleStar(email),
                       padding: EdgeInsets.zero,
@@ -346,78 +331,58 @@ class _InboxScreenState extends State<InboxScreen> {
                     PopupMenuButton<String>(
                       icon: const Icon(
                         Icons.more_vert,
-                        size: 20,
+                        size: 22,
                         color: AppColors.textTertiary,
                       ),
                       padding: EdgeInsets.zero,
                       onSelected: (value) => _handleEmailAction(email, value),
-                      itemBuilder:
-                          (context) => [
-                            PopupMenuItem(
-                              value: 'mark_read',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    email.isRead
-                                        ? Icons.mark_email_unread
-                                        : Icons.mark_email_read,
-                                    size: 20,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    email.isRead
-                                        ? 'Mark as unread'
-                                        : 'Mark as read',
-                                  ),
-                                ],
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'mark_read',
+                          child: Row(
+                            children: [
+                              Icon(
+                                email.isRead ? Icons.mark_email_unread : Icons.mark_email_read,
+                                size: 20,
+                                color: AppColors.textSecondary,
                               ),
-                            ),
-                            const PopupMenuItem(
-                              value: 'archive',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.archive,
-                                    size: 20,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text('Archive'),
-                                ],
-                              ),
-                            ),
-
-                            email.isInTrash
-                                ? PopupMenuItem(
-                                  value: 'restore',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.restore_from_trash,
-                                        size: 20,
-                                        color: AppColors.accent,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text('Restore'),
-                                    ],
-                                  ),
-                                )
-                                : PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.delete,
-                                        size: 20,
-                                        color: AppColors.deleteColor,
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text('Delete'),
-                                    ],
-                                  ),
+                              const SizedBox(width: 12),
+                              Text(email.isRead ? 'Mark as unread' : 'Mark as read'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'archive',
+                          child: Row(
+                            children: [
+                              Icon(Icons.archive, size: 20, color: AppColors.textSecondary),
+                              SizedBox(width: 12),
+                              Text('Archive'),
+                            ],
+                          ),
+                        ),
+                        email.isInTrash
+                            ? PopupMenuItem(
+                                value: 'restore',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.restore_from_trash, size: 20, color: AppColors.accent),
+                                    const SizedBox(width: 12),
+                                    Text('Restore'),
+                                  ],
                                 ),
-                          ],
+                              )
+                            : PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete, size: 20, color: AppColors.deleteColor),
+                                    SizedBox(width: 12),
+                                    Text('Delete'),
+                                  ],
+                                ),
+                              ),
+                      ],
                     ),
                   ],
                 ),
@@ -454,27 +419,22 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Container(
-      height: 400,
-      child: Center(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inbox, size: 64, color: AppColors.textTertiary),
+            Icon(Icons.mail_outline, size: 64, color: AppColors.primary.withOpacity(0.3)),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'No emails found',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black54),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Your inbox is empty or no emails match the current filter',
-              style: TextStyle(fontSize: 14, color: AppColors.textTertiary),
-              textAlign: TextAlign.center,
+            const Text(
+              'Your inbox is empty.',
+              style: TextStyle(color: Colors.grey),
             ),
           ],
         ),
@@ -483,34 +443,22 @@ class _InboxScreenState extends State<InboxScreen> {
   }
 
   Widget _buildErrorState(String message) {
-    return Container(
-      height: 400,
-      child: Center(
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: AppColors.error),
+            Icon(Icons.error_outline, size: 64, color: AppColors.error.withOpacity(0.3)),
             const SizedBox(height: 16),
-            Text(
-              'Something went wrong',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 8),
             Text(
               message,
-              style: TextStyle(fontSize: 14, color: AppColors.textTertiary),
-              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black54),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // context.read<EmailBloc>().add(LoadInboxEvent());
-              },
-              child: const Text('Retry'),
+            const SizedBox(height: 8),
+            const Text(
+              'Something went wrong.',
+              style: TextStyle(color: Colors.grey),
             ),
           ],
         ),

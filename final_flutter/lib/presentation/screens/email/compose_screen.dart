@@ -7,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'dart:async';
-import 'dart:io';
 
 // Assuming you have these imports for your BLoC
 // import 'package:final_flutter/bloc/email_bloc.dart';
@@ -20,8 +19,7 @@ class ComposeEmailScreen extends StatefulWidget {
   final Email? replyTo;
   final Email? forward;
 
-  const ComposeEmailScreen({Key? key, required this.user, this.replyTo, this.forward})
-    : super(key: key);
+  const ComposeEmailScreen({super.key, required this.user, this.replyTo, this.forward});
 
   @override
   State<ComposeEmailScreen> createState() => _ComposeEmailScreenState();
@@ -45,7 +43,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   bool _showBcc = false;
   bool _isDraft = false;
   Timer? _autoSaveTimer;
-  List<PlatformFile> _attachments = [];
+  final List<PlatformFile> _attachments = [];
 
   // Animation
   late AnimationController _animationController;
@@ -307,60 +305,77 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             children: [
               // Recipients Section
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   border: Border(
                     bottom: BorderSide(color: theme.dividerColor, width: 0.5),
                   ),
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
                 ),
                 child: Column(
                   children: [
                     // To field
-                    _buildRecipientField(
+                    TextFormField(
                       controller: _toController,
-                      label: 'To',
-                      hint: 'Enter email addresses',
-                      isRequired: true,
+                      decoration: InputDecoration(
+                        labelText: 'To',
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.pink),
+                        prefixIcon: const Icon(Icons.person_outline, color: Colors.pink),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter at least one recipient';
+                        }
+                        return null;
+                      },
                     ),
-
-                    // CC/BCC toggle buttons
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: () => setState(() => _showCc = !_showCc),
-                          child: Text(_showCc ? 'Hide Cc' : 'Add Cc'),
-                        ),
-                        TextButton(
-                          onPressed: () => setState(() => _showBcc = !_showBcc),
-                          child: Text(_showBcc ? 'Hide Bcc' : 'Add Bcc'),
-                        ),
-                      ],
-                    ),
-
+                    const SizedBox(height: 14),
                     // CC field
-                    if (_showCc)
-                      _buildRecipientField(
-                        controller: _ccController,
-                        label: 'Cc',
-                        hint: 'Enter email addresses',
+                    TextFormField(
+                      controller: _ccController,
+                      decoration: InputDecoration(
+                        labelText: 'Cc',
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.pink),
+                        prefixIcon: const Icon(Icons.group_outlined, color: Colors.pink),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
                       ),
-
+                    ),
+                    const SizedBox(height: 14),
                     // BCC field
-                    if (_showBcc)
-                      _buildRecipientField(
-                        controller: _bccController,
-                        label: 'Bcc',
-                        hint: 'Enter email addresses',
+                    TextFormField(
+                      controller: _bccController,
+                      decoration: InputDecoration(
+                        labelText: 'Bcc',
+                        labelStyle: const TextStyle(fontWeight: FontWeight.bold, color: Colors.pink),
+                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.pink),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
                       ),
-
+                    ),
+                    const SizedBox(height: 14),
                     // Subject field
-                    const SizedBox(height: 8),
                     TextFormField(
                       controller: _subjectController,
                       decoration: const InputDecoration(
                         labelText: 'Subject',
                         hintText: 'Enter subject',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
+                        filled: true,
+                        fillColor: Color(0xFFF4F5FB),
+                        contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 16),
                       ),
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -462,40 +477,6 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildRecipientField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    bool isRequired = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(labelText: label, hintText: hint),
-        validator:
-            isRequired
-                ? (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter at least one recipient';
-                  }
-                  // Basic email validation
-                  final emails = _parseEmails(value);
-                  for (final email in emails) {
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(email)) {
-                      return 'Please enter valid email addresses';
-                    }
-                  }
-                  return null;
-                }
-                : null,
-        keyboardType: TextInputType.emailAddress,
       ),
     );
   }

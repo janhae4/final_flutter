@@ -1,8 +1,6 @@
 import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
-import 'package:final_flutter/logic/email/email_bloc.dart';
-import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
 import 'package:final_flutter/presentation/screens/email/inbox_screen.dart';
 import 'package:final_flutter/presentation/screens/home/profile_screen.dart';

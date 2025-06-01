@@ -5,9 +5,6 @@ import 'package:final_flutter/data/models/login_result_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:file_picker/file_picker.dart';
 import 'package:http_parser/http_parser.dart';
 
 
