@@ -33,6 +33,8 @@ class AuthRepository {
       body: jsonEncode({'username': phone, 'password': password}),
     );
 
+    print(res.body);
+
     if (res.statusCode != 200) {
       final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
       throw Exception(errorMessage);

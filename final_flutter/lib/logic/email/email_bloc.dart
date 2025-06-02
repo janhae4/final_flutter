@@ -1,24 +1,56 @@
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/data/models/notification_model.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/logic/email/email_state.dart';
+import 'package:final_flutter/logic/notification/notification_bloc.dart';
+import 'package:final_flutter/logic/notification/notification_event.dart';
+import 'package:final_flutter/service/notification_service.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class EmailBloc extends Bloc<EmailEvent, EmailState> {
-  final EmailRepository repository;
+  final EmailRepository _emailRepository;
+  final NotificationBloc _notificationBloc;
+  final NotificationService _notificationService = NotificationService();
 
-  EmailBloc({required this.repository}) : super(EmailInitial()) {
+  EmailBloc({
+    required EmailRepository emailRepository,
+    required NotificationBloc notificationBloc,
+  }) : _emailRepository = emailRepository,
+       _notificationBloc = notificationBloc,
+       super(EmailInitial()) {
+    on<EmailConnectSocket>(_onConnectSocket);
     on<LoadEmails>(_onLoadEmails);
     on<LoadEmailDetail>(_onLoadEmailDetail);
     on<SendEmail>(_onSendEmail);
     on<RefreshEmails>(_onRefreshEmails);
     on<ChangeTab>(_onChangeTab);
-    // on<SearchEmails>(_onSearchEmails);
     on<DeleteEmail>(_onDeleteEmail);
     on<RestoreEmail>(_onRestoreEmail);
     on<ToggleStarEmail>(_onToggleStarEmail);
     on<MarkEmailAsRead>(_onMarkEmailAsRead);
+    on<NewEmailReceived>(_onNewEmailReceived);
+  }
+
+  Future<void> _onConnectSocket(
+    EmailConnectSocket event,
+    Emitter<EmailState> emit,
+  ) async {
+    try {
+      emit(EmailLoading());
+      await _emailRepository.connectSocket((EmailResponseModel newEmail) {
+        print('New email received: ${newEmail}');
+        print('New email received: ${newEmail.id}');
+        add(NewEmailReceived(newEmail));
+      });
+
+      final emails = await _getEmailsForCurrentTab(0);
+      emit(EmailLoaded(emails: emails));
+    } catch (e) {
+      emit(EmailError(e.toString()));
+    }
   }
 
   Future<void> _onLoadEmails(LoadEmails event, Emitter<EmailState> emit) async {
@@ -37,7 +69,11 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   ) async {
     try {
       emit(EmailLoading());
-      final email = await repository.getEmailDetail(event.id);
+      final email = await _emailRepository.getEmailDetail(event.id);
+
+      await _emailRepository.markRead(event.id);
+      await _notificationService.markAsRead(event.id);
+
       emit(EmailDetailLoaded(email: email));
     } catch (e) {
       emit(EmailError(e.toString()));
@@ -47,7 +83,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   Future<void> _onSendEmail(SendEmail event, Emitter<EmailState> emit) async {
     try {
       emit(EmailLoading());
-      await repository.sendEmail(event.email);
+      await _emailRepository.sendEmail(event.email);
       final emails = await _getEmailsForCurrentTab(0);
       emit(EmailLoaded(emails: emails));
     } catch (e) {
@@ -63,7 +99,6 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     if (currentState is EmailLoaded) {
       emit(currentState.copyWith(isRefreshing: true));
       try {
-        await _getEmailsForCurrentTab(currentState.currentTab);
         final emails = await _getEmailsForCurrentTab(currentState.currentTab);
         emit(currentState.copyWith(emails: emails, isRefreshing: false));
       } catch (e) {
@@ -80,29 +115,15 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     }
   }
 
-  // Future<void> _onSearchEmails(SearchEmails event, Emitter<EmailState> emit) {
-  //   final currentState = state;
-  //   if (currentState is EmailLoaded) {
-  //     final filteredEmails = _filterEmails(
-  //       _getEmailsForCurrentTab(currentState.currentTab),
-  //       event.query,
-  //     );
-  //     emit(currentState.copyWith(
-  //       emails: filteredEmails,
-  //       searchQuery: event.query,
-  //     ));
-  //   }
-  // }
-
   Future<void> _onDeleteEmail(
     DeleteEmail event,
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
-    await repository.moveToTrash(event.id);
+    await _emailRepository.moveToTrash(event.id);
     if (currentState is EmailLoaded) {
-      final emails = _getEmailsForCurrentTab(currentState.currentTab);
-      emit(currentState.copyWith(emails: await emails));
+      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
+      emit(currentState.copyWith(emails: emails));
     }
   }
 
@@ -111,10 +132,10 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
-    await repository.restoreFromTrash(event.id);
+    await _emailRepository.restoreFromTrash(event.id);
     if (currentState is EmailLoaded) {
-      final emails = _getEmailsForCurrentTab(currentState.currentTab);
-      emit(currentState.copyWith(emails: await emails));
+      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
+      emit(currentState.copyWith(emails: emails));
     }
   }
 
@@ -123,10 +144,10 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
-    await repository.toggleStar(event.id);
+    await _emailRepository.toggleStar(event.id);
     if (currentState is EmailLoaded) {
-      final emails = _getEmailsForCurrentTab(currentState.currentTab);
-      emit(currentState.copyWith(emails: await emails));
+      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
+      emit(currentState.copyWith(emails: emails));
     }
   }
 
@@ -135,36 +156,70 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
-    await repository.markRead(event.id);
+    await _emailRepository.markRead(event.id);
+    await _notificationService.markAsRead(event.id);
+
     if (currentState is EmailLoaded) {
-      final emails = _getEmailsForCurrentTab(currentState.currentTab);
-      emit(currentState.copyWith(emails: await emails));
+      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
+      emit(currentState.copyWith(emails: emails));
+    }
+  }
+
+  Future<void> _onNewEmailReceived(
+    NewEmailReceived event,
+    Emitter<EmailState> emit,
+  ) async {
+    final currentState = state;
+
+    await _notificationService.showEmailNotification(
+      sender: event.email.sender ?? 'Unknown',
+      subject: event.email.subject ?? 'No Subject',
+      receivedTime: event.email.createdAt ?? DateTime.now(),
+      emailId: event.email.id,
+    );
+
+    print('New email received: ${event.email}');
+
+    _notificationBloc.add(
+      AddNotification(
+        NotificationItem(
+          id:
+              event.email.id ??
+              DateTime.now().millisecondsSinceEpoch.toString(),
+          sender: event.email.sender ?? 'Unknown',
+          subject: event.email.subject ?? 'No Subject',
+          time: event.email.createdAt ?? DateTime.now(),
+          isRead: false,
+        ),
+      ),
+    );
+
+    if (currentState is EmailLoaded && currentState.currentTab == 0) {
+      final updatedList = [event.email, ...currentState.emails];
+      emit(currentState.copyWith(emails: updatedList));
     }
   }
 
   Future<List<EmailResponseModel>> _getEmailsForCurrentTab(int tabIndex) async {
     switch (tabIndex) {
       case 0:
-        return await repository.getEmails();
+        return await _emailRepository.getEmails();
       case 1:
-        return await repository.getStarred();
+        return await _emailRepository.getStarred();
       case 2:
-        return await repository.getSent();
+        return await _emailRepository.getSent();
       case 3:
-        return await repository.getDrafts();
+        return await _emailRepository.getDrafts();
       case 4:
-        return await repository.getTrash();
+        return await _emailRepository.getTrash();
       default:
-        return await repository.getEmails();
+        return await _emailRepository.getEmails();
     }
   }
 
-  // List<Email> _filterEmails(List<Email> emails, String query) {
-  //   if (query.isEmpty) return emails;
-  //   return emails.where((email) {
-  //     return email.subject.toLowerCase().contains(query.toLowerCase()) ||
-  //         email.sender.toLowerCase().contains(query.toLowerCase()) ||
-  //         email.content.toLowerCase().contains(query.toLowerCase());
-  //   }).toList();
-  // }
+  @override
+  Future<void> close() {
+    _emailRepository.dispose();
+    return super.close();
+  }
 }

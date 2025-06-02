@@ -27,19 +27,31 @@ class EmailResponseModel {
 
   factory EmailResponseModel.fromJson(Map<String, dynamic> json) {
     return EmailResponseModel(
-      json['_id'],
+      json['_id'] ?? json['id'],
       json['sender'],
       json['subject'],
       json['plainTextContent'],
-      json['attachments'],
-      json['labels'],
-      json['starred'],
-      json['isRead'],
-      json['isDraft'],
-      json['isInTrash'],
-      DateTime.parse(json['createdAt']),
+      json['attachments'] ?? [],
+      json['labels'] ?? [],
+      json['starred'] ?? false,
+      json['isRead'] ?? false,
+      json['isDraft'] ?? false,
+      json['isInTrash'] ?? false,
+      DateTime.tryParse(json['createdAt'] ?? ''),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'sender': sender,
+    'subject': subject,
+    'plainTextContent': plainTextContent,
+    'attachments': attachments,
+    'labels': labels,
+    'starred': starred,
+    'isRead': isRead,
+    'isDraft': isDraft,
+    'isInTrash': isInTrash,
+    'createdAt': createdAt?.toIso8601String(),
+  };
 }
-
-

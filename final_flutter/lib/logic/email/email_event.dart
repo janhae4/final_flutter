@@ -1,4 +1,5 @@
 import 'package:final_flutter/data/models/email.dart';
+import 'package:final_flutter/data/models/email_response_model.dart';
 
 abstract class EmailEvent {}
 
@@ -70,3 +71,10 @@ class EmailReceived extends EmailEvent {
   final Email email;
   EmailReceived(this.email);
 }
+
+class NewEmailReceived extends EmailEvent {
+  final EmailResponseModel email;
+  NewEmailReceived(this.email);
+}
+
+class EmailConnectSocket extends EmailEvent {}

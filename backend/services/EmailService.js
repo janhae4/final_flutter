@@ -1,5 +1,6 @@
 const Email = require('../models/Email');
 const User = require('../models/User');
+const { userSockets } = require('../db/websocket');
 
 exports.createEmail = async (userId, data) => {
     const resolveUsers = async (emails) => {
@@ -16,15 +17,34 @@ exports.createEmail = async (userId, data) => {
         resolveUsers(data.bcc),
     ]);
 
-    return await Email.create({
+    const allReceivers = [...receivers, ...ccs, ...bccs];
+
+    const newEmail = await Email.create({
         ...data,
         senderId: userId,
-        receiverIds: [
-            ...receivers,
-            ...ccs,
-            ...bccs
-        ]
+        receiverIds: allReceivers
     });
+
+    allReceivers.forEach(receiverId => {
+        const socket = userSockets.get(receiverId.toString());
+        if (socket) {
+            socket.emit('new_email', {
+                id: newEmail._id,
+                sender: newEmail.sender,
+                subject: newEmail.subject,
+                plainTextContent: newEmail.plainTextContent,
+                attachments: newEmail.attachments,
+                labels: newEmail.labels,
+                starred: newEmail.starred,
+                isRead: newEmail.isRead,
+                isDraft: newEmail.isDraft,
+                isInTrash: newEmail.isInTrash,
+                createdAt: newEmail.createdAt
+            });
+        }
+    });
+
+    return newEmail;
 }
 
 exports.getAllEmails = async (id) =>

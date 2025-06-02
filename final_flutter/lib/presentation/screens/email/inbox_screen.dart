@@ -19,18 +19,21 @@ class InboxScreen extends StatefulWidget {
   _InboxScreenState createState() => _InboxScreenState();
 }
 
-class _InboxScreenState extends State<InboxScreen> {
+class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClientMixin {
+
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingButton = false;
   String _selectedFilter = 'All';
-  // Add this to your InboxScreen's initState method to load emails when the screen starts
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
+
   void initState() {
     super.initState();
     print(widget.tabIndex);
     _scrollController.addListener(_onScroll);
-    // Load emails when the screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EmailBloc>().add(LoadEmails(widget.tabIndex));
     });
@@ -72,7 +75,6 @@ class _InboxScreenState extends State<InboxScreen> {
           );
         },
       ),
-      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
@@ -133,6 +135,7 @@ class _InboxScreenState extends State<InboxScreen> {
     } else if (state is EmailLoaded) {
       return _buildEmailListView(state.emails);
     } else if (state is EmailError) {
+      print(state.message);
       return _buildErrorState(state.message);
     }
     return _buildEmptyState();
@@ -514,20 +517,6 @@ class _InboxScreenState extends State<InboxScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionButton() {
-    return AnimatedScale(
-      scale: _showFloatingButton ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 200),
-      child: FloatingActionButton.extended(
-        onPressed: () => _composeEmail(),
-        backgroundColor: AppColors.accent,
-        foregroundColor: AppColors.textOnPrimary,
-        icon: const Icon(Icons.edit),
-        label: const Text('Compose'),
       ),
     );
   }

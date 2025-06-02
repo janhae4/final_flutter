@@ -1,58 +1,39 @@
-// lib/services/socket_service.dart
-import 'package:flutter/material.dart';
+import 'package:final_flutter/data/models/email_response_model.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
-class SocketService {
+class EmailSocketService {
   late IO.Socket socket;
 
-  void connect({
-    required String userId,
-    required BuildContext context,
-    required Function(bool approved) onUserDecision,
-  }) {
-    socket = IO.io('http://localhost:3000', {
-      'transports': ['websocket'],
-      'query': {'userId': userId},
+  void initSocket(String token) {
+    socket = IO.io(
+      'http://localhost:3000',
+      IO.OptionBuilder()
+          .setTransports(['websocket'])
+          .disableAutoConnect()
+          .setAuth({'token': token})
+          .build(),
+    );
+
+    socket.onConnect((_) {
+      print('Connected to WebSocket');
     });
 
-    socket.on('connect', (_) {
-      print('Socket connected ✅');
+    socket.onDisconnect((_) {
+      print('Disconnected');
     });
 
-    socket.on('login_request', (data) {
-      final sessionId = data['sessionId'];
+    socket.connect();
+  }
 
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text('Xác nhận đăng nhập'),
-          content: Text('Bạn có muốn cho phép đăng nhập không?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                socket.emit('login_response', {
-                  'sessionId': sessionId,
-                  'approved': false,
-                });
-                onUserDecision(false);
-                Navigator.pop(context);
-              },
-              child: Text('Từ chối'),
-            ),
-            TextButton(
-              onPressed: () {
-                socket.emit('login_response', {
-                  'sessionId': sessionId,
-                  'approved': true,
-                });
-                onUserDecision(true);
-                Navigator.pop(context);
-              },
-              child: Text('Cho phép'),
-            ),
-          ],
-        ),
-      );
+  void sendEmail(EmailResponseModel email) {
+    socket.emit('send_email', email.toJson());
+  }
+
+  void listenForEmails(Function(EmailResponseModel) onNewEmail) {
+    socket.on('new_email', (data) {
+      final email = EmailResponseModel.fromJson(data);
+      print(email.toJson());
+      onNewEmail(email);
     });
   }
 

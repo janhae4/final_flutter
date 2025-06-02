@@ -1,16 +1,27 @@
 import 'package:final_flutter/config/app_theme.dart';
+import 'package:final_flutter/data/models/notification_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
+import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/logic/email/email_repository.dart';
+import 'package:final_flutter/logic/email/email_state.dart';
+import 'package:final_flutter/logic/notification/notfication_state.dart';
+import 'package:final_flutter/logic/notification/notification_bloc.dart';
+import 'package:final_flutter/logic/notification/notification_event.dart';
 import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
+import 'package:final_flutter/presentation/screens/email/detail_screen.dart';
 import 'package:final_flutter/presentation/screens/email/inbox_screen.dart';
 import 'package:final_flutter/presentation/screens/home/profile_screen.dart';
+import 'package:final_flutter/service/notification_service.dart';
+import 'package:final_flutter/service/socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_event.dart';
 import 'package:final_flutter/presentation/screens/auth/login_screen.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import 'package:badges/badges.dart' as badges;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,7 +30,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   UserModel? _user;
 
@@ -34,11 +45,30 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadProfile();
+    _connectSocket();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      NotificationService().resetBadgeCount();
+    }
   }
 
   Future<void> _loadProfile() async {
     context.read<AuthBloc>().add(LoadProfile());
+  }
+
+  Future<void> _connectSocket() async {
+    context.read<EmailBloc>().add(EmailConnectSocket());
   }
 
   @override
@@ -54,6 +84,24 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => _refreshEmails(),
+          ),
+          BlocBuilder<NotificationBloc, NotificationState>(
+            builder: (context, state) {
+              return badges.Badge(
+                showBadge: state.unreadCount > 0,
+                badgeContent: Text(
+                  '${state.unreadCount}',
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.notifications),
+                  onPressed: () {
+                    context.read<NotificationBloc>().add(MarkAllAsRead());
+                    _showNotificationList(context);
+                  },
+                ),
+              );
+            },
           ),
           PopupMenuButton<String>(
             onSelected: (value) {
@@ -213,12 +261,205 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_user == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          return InboxScreen(
-            key: ValueKey(_currentIndex),
-            user: _user!,
-            tabIndex: _currentIndex,
+          return BlocListener<EmailBloc, EmailState>(
+            listener: (context, emailState) {
+              if (emailState is EmailError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: ${emailState.message}')),
+                );
+              }
+            },
+            child: InboxScreen(
+              key: Key('inbox-screen-$_currentIndex'),
+              user: _user!,
+              tabIndex: _currentIndex,
+            ),
           );
         },
+      ),
+    );
+  }
+
+  void _showNotificationList(BuildContext rootContext) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.3,
+          maxChildSize: 0.9,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  // Handle bar
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        const Text(
+                          'Notifications',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton(
+                          onPressed: () {
+                            // Mark all as read
+                          },
+                          child: const Text(
+                            'Mark all as read',
+                            style: TextStyle(color: Colors.blue, fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const Divider(height: 1),
+
+                  // Notifications list
+                  Expanded(
+                    child: BlocBuilder<NotificationBloc, NotificationState>(
+                      bloc: BlocProvider.of<NotificationBloc>(rootContext),
+                      builder: (context, state) {
+                        if (state.notifications.isEmpty) {
+                          return const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.notifications_none,
+                                  size: 64,
+                                  color: Colors.grey,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No notifications',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
+                          controller: scrollController,
+                          itemCount: state.notifications.length,
+                          itemBuilder: (context, index) {
+                            final notification = state.notifications[index];
+                            return _buildNotificationItem(
+                              context,
+                              notification,
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildNotificationItem(
+    BuildContext rootContext,
+    NotificationItem notification,
+  ) {
+    return Container(
+      color:
+          notification.isRead
+              ? Colors.transparent
+              : AppColors.primary.withAlpha((255 * 0.1).toInt()),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        leading: CircleAvatar(
+          radius: 20,
+          backgroundColor: AppColors.primaryLight.withAlpha(
+            (255 * 0.9).toInt(),
+          ),
+          child: Text(
+            notification.sender[0].toUpperCase(),
+            style: TextStyle(
+              color: AppColors.primaryDark,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                notification.sender,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight:
+                      notification.isRead ? FontWeight.normal : FontWeight.w600,
+                  color: Colors.black87,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              timeago.format(notification.time),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            notification.subject,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[700],
+              height: 1.3,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        trailing:
+            !notification.isRead
+                ? Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                  ),
+                )
+                : null,
       ),
     );
   }
@@ -398,10 +639,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _refreshEmails() {
-    // Implement refresh functionality
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Refreshing emails...')));
+    context.read<EmailBloc>().add(RefreshEmails());
   }
 
   void _createNewLabel(BuildContext context) {

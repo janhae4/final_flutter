@@ -1,3 +1,5 @@
+import 'package:final_flutter/logic/notification/notification_bloc.dart';
+import 'package:final_flutter/service/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/config/app_theme.dart';
@@ -7,14 +9,14 @@ import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/presentation/screens/auth/splash_screen.dart';
 
-void main() {
+void main() async {
   final authRepository = AuthRepository();
   final emailRepository = EmailRepository();
-
-  runApp(MyApp(
-    authRepository: authRepository,
-    emailRepository: emailRepository,
-  ));
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().initialize();
+  runApp(
+    MyApp(authRepository: authRepository, emailRepository: emailRepository),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,15 +31,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final notificationBloc = NotificationBloc();
+
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(
-          create: (_) => AuthBloc(authRepository),
-        ),
+        BlocProvider<AuthBloc>(create: (_) => AuthBloc(authRepository)),
+        BlocProvider<NotificationBloc>.value(value: notificationBloc),
         BlocProvider<EmailBloc>(
-          create: (_) => EmailBloc(repository: emailRepository),
+          create:
+              (_) => EmailBloc(
+                emailRepository: emailRepository,
+                notificationBloc: notificationBloc,
+              ),
         ),
-        // Thêm các bloc khác ở đây nếu cần
       ],
       child: MaterialApp(
         title: 'Flutter App',

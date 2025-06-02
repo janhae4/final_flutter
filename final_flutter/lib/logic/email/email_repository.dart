@@ -2,14 +2,24 @@ import 'dart:convert';
 
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/service/notification_service.dart';
+import 'package:final_flutter/service/socket_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EmailRepository {
   final backendUrl = 'http://localhost:3000/api/email';
+  final _socketService = EmailSocketService();
+
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
+  }
+
+  Future<void> connectSocket(Function(EmailResponseModel) onNewEmail) async {
+    final token = await getToken();
+    _socketService.initSocket(token!);
+    _socketService.listenForEmails(onNewEmail);
   }
 
   Future<List<EmailResponseModel>> getEmails() async {
@@ -19,13 +29,15 @@ class EmailRepository {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode != 200) {
+      print(123123123);
       final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
       throw Exception(errorMessage);
     }
 
     final json = jsonDecode(res.body);
-    print(json);
-    return json.map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e)).toList();
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
   }
 
   Future<Email> getEmailDetail(String id) async {
@@ -35,16 +47,16 @@ class EmailRepository {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode != 200) {
+      print(123123123);
       final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
       throw Exception(errorMessage);
     }
 
     final json = jsonDecode(res.body);
-    print(json);
     return Email.fromJson(json);
   }
 
-  Future<List<EmailResponseModel>> getSent () async {
+  Future<List<EmailResponseModel>> getSent() async {
     final token = await getToken();
     final res = await http.get(
       Uri.parse('$backendUrl/sent'),
@@ -56,7 +68,9 @@ class EmailRepository {
     }
 
     final json = jsonDecode(res.body);
-    return json.map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e)).toList();
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
   }
 
   Future<List<EmailResponseModel>> getDrafts() async {
@@ -71,7 +85,9 @@ class EmailRepository {
     }
 
     final json = jsonDecode(res.body);
-    return json.map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e)).toList();
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
   }
 
   Future<List<EmailResponseModel>> getTrash() async {
@@ -86,7 +102,9 @@ class EmailRepository {
     }
 
     final json = jsonDecode(res.body);
-    return json.map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e)).toList();
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
   }
 
   Future<List<EmailResponseModel>> getStarred() async {
@@ -101,17 +119,23 @@ class EmailRepository {
     }
 
     final json = jsonDecode(res.body);
-    return json.map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e)).toList();
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
   }
 
   Future<void> sendEmail(Email email) async {
     final token = await getToken();
     final res = await http.post(
       Uri.parse(backendUrl),
-      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
       body: jsonEncode(email.toJson()),
     );
-    if (res.statusCode != 200) {
+    if (res.statusCode != 201) {
+      print("SEND EMAIL ERROR");
       final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
       throw Exception(errorMessage);
     }
@@ -175,5 +199,9 @@ class EmailRepository {
       final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
       throw Exception(errorMessage);
     }
+  }
+
+  void dispose() {
+    _socketService.dispose();
   }
 }

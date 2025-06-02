@@ -23,10 +23,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  UserModel? user;
-  bool isLoading = true;
   bool twoStepEnabled = false;
   final authRepository = AuthRepository();
+  UserModel? user;
 
   static const primaryColor = Color(0xFF6C63FF);
   static const secondaryColor = Color(0xFF4CAF50);
@@ -47,6 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    user = widget.user;
     nameController = TextEditingController(text: widget.user!.name);
     emailController = TextEditingController(text: widget.user!.email);
     phoneController = TextEditingController(text: widget.user!.phone);
@@ -117,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         },
         builder: (context, state) {
-          if (isLoading) {
+          if (widget.user == null) {
             return const Center(
               child: CircularProgressIndicator(color: primaryColor),
             );
