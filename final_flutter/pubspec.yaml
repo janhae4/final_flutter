@@ -106,6 +106,7 @@ flutter:
 
   assets:
     - assets/fonts/
+    - assets/images/logo_hh.png
 
   fonts:
     - family: Roboto
