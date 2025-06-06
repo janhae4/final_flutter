@@ -1,3 +1,4 @@
+import 'package:final_flutter/data/models/label_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 
 abstract class AuthState {}
@@ -56,4 +57,9 @@ class ImageUploaded extends AuthState {
 class LoadProfileSuccess extends AuthState {
   final UserModel user;
   LoadProfileSuccess(this.user);
+}
+
+class LoadLabelsSuccess extends AuthState {
+  final List<LabelModel> labels;
+  LoadLabelsSuccess(this.labels);
 }

@@ -33,6 +33,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     on<MarkEmailAsRead>(_onMarkEmailAsRead);
     on<NewEmailReceived>(_onNewEmailReceived);
     on<SearchEmail>(_onSearchEmail);
+    on<FilterByLabel>(_onFilterByLabel);
   }
 
   Future<void> _onConnectSocket(
@@ -226,6 +227,17 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     if (currentState is EmailLoaded) {
       final emails = await _emailRepository.searchEmails(event);
       emit(EmailLoaded(emails: emails, currentTab: 0, searchQuery: event.keyword ?? ''));
+    }
+  }
+
+  Future<void> _onFilterByLabel(
+    FilterByLabel event,
+    Emitter<EmailState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is EmailLoaded) {
+      final emails = await _emailRepository.getEmailsByLabel(event.label);
+      emit(currentState.copyWith(emails: emails, currentTab: 0));
     }
   }
 

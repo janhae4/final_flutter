@@ -142,3 +142,45 @@ exports.uploadImageToBackend = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+exports.getAllLabels = async (req, res) => {
+    try {
+        const labels = await UserService.getAllLabels(req.user.id);
+        res.json(labels);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.createLabel = async (req, res) => {
+    try {
+        const label = await UserService.createLabel(req.user.id, req.body);
+        res.status(201).json(label);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.updateLabel = async (req, res) => {
+    try {
+        const label = await UserService.updateLabel(req.user.id, req.params.id, req.body);
+        if (!label) {
+            return res.status(404).json({ message: 'Label not found' });
+        }
+        res.json(label);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.deleteLabel = async (req, res) => {
+    try {
+        const label = await UserService.deleteLabel(req.user.id, req.params.id);
+        if (!label) {
+            return res.status(404).json({ message: 'Label not found' });
+        }
+        res.json({ message: 'Label deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

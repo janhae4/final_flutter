@@ -173,3 +173,27 @@ exports.uploadImageToBackend = async (userId, path) => {
     const replacePath = path.replace(/\\/g, '/');
     return await User.findByIdAndUpdate(userId, { avatarUrl: replacePath }, { new: true });
 }
+
+exports.createLabel = async (userId, label) => await User.findByIdAndUpdate(
+    userId,
+    { $push: { labels: label } },
+    { new: true }
+).select('labels');
+
+exports.getLabels = async (userId) => await User.findById(userId)
+    .select('labels')
+    .then(user => user.labels || [])
+    .catch(() => []);
+
+exports.updateLabel = async (userId, labelId, newLabel) => await User.findOneAndUpdate(
+    { _id: userId, "labels._id": labelId },
+    { $set: { "labels.$.label": newLabel.newLabel } },
+    { new: true }
+).select('labels');
+
+exports.deleteLabel = async (userId, labelId) =>
+    await User.findByIdAndUpdate(
+        userId,
+        { $pull: { labels: { _id: labelId } } },
+        { new: true }
+    ).select('labels');

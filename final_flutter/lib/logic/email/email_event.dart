@@ -112,3 +112,8 @@ class SearchEmail extends EmailEvent {
     };
   }
 }
+
+class FilterByLabel extends EmailEvent {
+  final String label;
+  FilterByLabel(this.label);
+}

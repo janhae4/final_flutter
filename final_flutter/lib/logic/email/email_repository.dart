@@ -238,6 +238,23 @@ class EmailRepository {
         .toList();
   }
 
+  Future<List<EmailResponseModel>> getEmailsByLabel(String label) async {
+    final token = await getToken();
+    final res = await http.get(
+      Uri.parse('$backendUrl/labels/$label'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Get emails by label failed';
+      throw Exception(errorMessage);
+    }
+
+    final json = jsonDecode(res.body);
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
+  }
+
   void dispose() {
     _socketService.dispose();
   }

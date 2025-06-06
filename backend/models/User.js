@@ -18,7 +18,11 @@ const userSchema = new mongoose.Schema({
             },
         ],
         select: false
-    }
+    },
+    labels: [{
+        label: { type: String, required: true },
+        color: { type: String, default: '#000000' },
+    }]
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

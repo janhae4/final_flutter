@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:final_flutter/data/models/label_model.dart';
 import 'package:final_flutter/data/models/login_result_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:final_flutter/data/models/user_model.dart';
@@ -234,5 +235,83 @@ class AuthRepository {
 
     final json = jsonDecode(await response.stream.bytesToString());
     return UserModel.fromJson(json['user']);
+  }
+
+  Future<List<LabelModel>> addLabel(String label) async {
+    final token = await getToken();
+    final res = await http.post(
+      Uri.parse('$backendUrl/labels'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'label': label}),
+    );
+
+    if (res.statusCode != 201) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Add label failed';
+      throw Exception(errorMessage);
+    }
+
+    final json = jsonDecode(res.body);
+    return List<LabelModel>.from(
+      json['labels'].map((label) => LabelModel.fromJson(label)),
+    );
+  }
+
+  Future<List<LabelModel>> removeLabel(String label) async {
+    final token = await getToken();
+    final res = await http.delete(
+      Uri.parse('$backendUrl/labels/$label'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (res.statusCode != 200) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Remove label failed';
+      throw Exception(errorMessage);
+    }
+
+    final json = jsonDecode(res.body);
+    return List<LabelModel>.from(
+      json['labels'].map((label) => LabelModel.fromJson(label)),
+    );
+  }
+
+  Future<List<LabelModel>> getLabels() async {
+    final token = await getToken();
+    final res = await http.get(
+      Uri.parse('$backendUrl/labels'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Get labels failed';
+      throw Exception(errorMessage);
+    }
+    final json = jsonDecode(res.body);
+    return List<LabelModel>.from(json['labels'] ?? []);
+  }
+
+  Future<List<LabelModel>> updateLabel(String oldLabel, String newLabel) async {
+    final token = await getToken();
+    final res = await http.put(
+      Uri.parse('$backendUrl/labels/$oldLabel'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({'newLabel': newLabel}),
+    );
+
+    if (res.statusCode != 200) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Update label failed';
+      throw Exception(errorMessage);
+    }
+    final json = jsonDecode(res.body);
+    return List<LabelModel>.from(
+      json['labels'].map((label) => LabelModel.fromJson(label)),
+    );
   }
 }

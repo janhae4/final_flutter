@@ -65,3 +65,26 @@ class UpdatePasswordRequested extends AuthEvent {
 class LoadProfile extends AuthEvent {}
 
 class LogoutRequested extends AuthEvent {}
+
+class AddLabel extends AuthEvent {
+  final String label;
+  AddLabel(this.label);
+}
+
+class RemoveLabel extends AuthEvent {
+  final String label;
+  RemoveLabel(this.label);
+}
+
+class DeleteLabel extends AuthEvent {
+  final String label;
+  DeleteLabel(this.label);
+}
+
+class UpdateLabel extends AuthEvent {
+  final String id;
+  final String label;
+  UpdateLabel(this.id, this.label);
+}
+
+class LoadLabels extends AuthEvent {}

@@ -1,4 +1,5 @@
 import 'package:final_flutter/config/app_theme.dart';
+import 'package:final_flutter/data/models/label_model.dart';
 import 'package:final_flutter/data/models/notification_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
@@ -39,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     'Drafts',
     'Trash',
   ];
+
+  List<LabelModel>? _labels;
 
   final _fromController = TextEditingController();
   final _toController = TextEditingController();
@@ -233,27 +236,55 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Text('Labels'),
             ),
-            ListTile(
-              leading: const Icon(Icons.label),
-              title: const Text('Work'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.label),
-              title: const Text('Personal'),
-              onTap: () {
-                // Navigate to label view
-                Navigator.pop(context);
-              },
-            ),
+            if (_labels != null)
+              ..._labels!.map((label) {
+                return ListTile(
+                  leading: const Icon(Icons.label),
+                  onTap: () {},
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            context.read<EmailBloc>().add(
+                              FilterByLabel(label.label),
+                            );
+                            Navigator.pop(context);
+                          },
+                          child: Text(label.label),
+                        ),
+                      ),
+                      PopupMenuButton<String>(
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _editLabel(context, label);
+                          } else if (value == 'delete') {
+                            _deleteLabel(context, label.id);
+                          }
+                        },
+                        itemBuilder:
+                            (context) => const [
+                              PopupMenuItem(value: 'edit', child: Text('Edit')),
+                              PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ],
+                      ),
+                    ],
+                  ),
+                );
+              })
+            else
+              Container(),
+
             ListTile(
               leading: const Icon(Icons.add),
               title: const Text('Create new label'),
               onTap: () {
+                print('Create new label tapped');
                 _createNewLabel(context);
-                Navigator.pop(context);
               },
             ),
           ],
@@ -264,12 +295,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           if (state is LoadProfileSuccess) {
             setState(() {
               _user = state.user;
+              _labels = _user?.labels ?? [];
             });
           } else if (state is Unauthenticated) {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (_) => const LoginScreen()),
             );
+          }
+          if (state is LoadLabelsSuccess) {
+            setState(() {
+              _user = _user?.copyWith(labels: state.labels);
+            });
           }
         },
         builder: (context, state) {
@@ -619,7 +656,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       const SizedBox(width: 10),
                       Expanded(
                         child: TextField(
-                          controller:_toDateController,
+                          controller: _toDateController,
                           readOnly: true,
                           decoration: const InputDecoration(
                             labelText: 'To Date',
@@ -697,6 +734,46 @@ void _refreshEmails(BuildContext context) {
   context.read<EmailBloc>().add(RefreshEmails());
 }
 
+void _editLabel(BuildContext context, LabelModel label) async {
+  final controller = TextEditingController(text: label.label);
+
+  await showDialog(
+    context: context,
+    builder:
+        (_) => AlertDialog(
+          title: const Text('Edit Label'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                decoration: const InputDecoration(labelText: 'Label'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                context.read<AuthBloc>().add(
+                  UpdateLabel(label.id, controller.text),
+                );
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+  );
+}
+
+void _deleteLabel(BuildContext context, String labelId) {
+  context.read<AuthBloc>().add(DeleteLabel(labelId));
+}
+
 void _createNewLabel(BuildContext context) {
   showDialog(
     context: context,
@@ -715,7 +792,7 @@ void _createNewLabel(BuildContext context) {
           ),
           TextButton(
             onPressed: () {
-              // Save new label
+              context.read<AuthBloc>().add(AddLabel(newLabel));
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Label "$newLabel" created')),
