@@ -12,15 +12,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class InboxScreen extends StatefulWidget {
   final UserModel? user;
   final int tabIndex;
-  const InboxScreen({Key? key, required this.user, required this.tabIndex})
-    : super(key: key);
+  const InboxScreen({super.key, required this.user, required this.tabIndex});
 
   @override
   _InboxScreenState createState() => _InboxScreenState();
 }
 
 class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClientMixin {
-
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingButton = false;
   String _selectedFilter = 'All';
@@ -29,14 +27,9 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   bool get wantKeepAlive => true;
 
   @override
-
   void initState() {
     super.initState();
-    print(widget.tabIndex);
     _scrollController.addListener(_onScroll);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EmailBloc>().add(LoadEmails(widget.tabIndex));
-    });
   }
 
   void _onScroll() {
@@ -457,7 +450,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   }
 
   Widget _buildEmptyState() {
-    return Container(
+    return SizedBox(
       height: 400,
       child: Center(
         child: Column(
@@ -486,7 +479,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   }
 
   Widget _buildErrorState(String message) {
-    return Container(
+    return SizedBox(
       height: 400,
       child: Center(
         child: Column(

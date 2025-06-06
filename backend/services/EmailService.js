@@ -94,3 +94,61 @@ exports.markRead = async (id) => {
 exports.moveToTrash = async (id) => Email.findByIdAndUpdate(id, { isInTrash: true, starred: false }, { new: true });
 
 exports.restoreEmail = async (id) => Email.findByIdAndUpdate(id, { isInTrash: false }, { new: true });
+
+exports.searchEmails = async (userId, query) => {
+    const regex = new RegExp(query, 'i');
+
+    return await Email.find({
+        $and: [
+            {
+                $or: [
+                    { sender: regex },
+                    { to: { $elemMatch: { $regex: regex } } },
+                    { subject: regex },
+                    { plainTextContent: regex },
+                ]
+            },
+            {
+                $or: [
+                    { senderId: userId },
+                    { receiverIds: userId },
+                ]
+            },
+            { isInTrash: false },
+        ]
+    }).sort({ createdAt: -1 });
+};
+
+exports.advancedSearch = async (userId, req) => {
+    console.log("Advanced Search Query:", req);
+    const { from, to, subject, keywords, hasAttachment, fromDate, toDate , hasAttachments} = req.query;
+    const query = {
+        $and: [
+            { isInTrash: false },
+            {
+                $or: [
+                    { senderId: userId},
+                    { receiverIds: userId},
+                ]
+            }
+        ]
+    };
+
+    if (from) query.$and.push({ sender: new RegExp(from, 'i') });
+    if (to) query.$and.push({ to: { $elemMatch: { $regex: new RegExp(to, 'i') } } });
+    if (subject) query.$and.push({ subject: new RegExp(subject, 'i') });
+    if (keywords) query.$and.push({ plainTextContent: new RegExp(keywords, 'i') });
+    if (hasAttachments === 'true') query.$and.push({ attachments: { $ne: [] } });
+    if (fromDate && toDate) {
+        query.$and.push({
+            createdAt: { $gte: new Date(fromDate), $lte: new Date(toDate) }
+        });
+    }
+    else if (fromDate) {
+        query.$and.push({ createdAt: { $gte: new Date(fromDate) } });
+    } else if (toDate) {
+        query.$and.push({ createdAt: { $lte: new Date(toDate) } });
+    }
+
+    return await Email.find(query).sort({ createdAt: -1 });
+}

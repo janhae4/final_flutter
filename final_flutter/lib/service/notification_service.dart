@@ -135,12 +135,12 @@ class NotificationService {
   }
 
   Future<void> _updateBadgeCount() async {
-    await _notificationsPlugin
+    _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin
         >();
 
-    await _notificationsPlugin
+    _notificationsPlugin
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();

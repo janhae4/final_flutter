@@ -4,22 +4,20 @@ import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
-import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/logic/email/email_state.dart';
 import 'package:final_flutter/logic/notification/notfication_state.dart';
 import 'package:final_flutter/logic/notification/notification_bloc.dart';
 import 'package:final_flutter/logic/notification/notification_event.dart';
 import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
-import 'package:final_flutter/presentation/screens/email/detail_screen.dart';
 import 'package:final_flutter/presentation/screens/email/inbox_screen.dart';
 import 'package:final_flutter/presentation/screens/home/profile_screen.dart';
 import 'package:final_flutter/service/notification_service.dart';
-import 'package:final_flutter/service/socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_event.dart';
 import 'package:final_flutter/presentation/screens/auth/login_screen.dart';
+import 'package:intl/intl.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:badges/badges.dart' as badges;
 
@@ -41,6 +39,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     'Drafts',
     'Trash',
   ];
+
+  final _fromController = TextEditingController();
+  final _toController = TextEditingController();
+  final _subjectController = TextEditingController();
+  final _keywordController = TextEditingController();
+  final _fromDateController = TextEditingController();
+  final _toDateController = TextEditingController();
+  DateTime? _fromDate;
+  DateTime? _toDate;
+  bool _hasAttachments = false;
 
   @override
   void initState() {
@@ -83,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () => _refreshEmails(),
+            onPressed: () => _refreshEmails(context),
           ),
           BlocBuilder<NotificationBloc, NotificationState>(
             builder: (context, state) {
@@ -130,7 +138,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
+        onTap: (index) {
+          setState(() => _currentIndex = index);
+          context.read<EmailBloc>().add(ChangeTab(index));
+        },
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
@@ -173,6 +184,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               selected: _currentIndex == 0,
               onTap: () {
                 setState(() => _currentIndex = 0);
+                context.read<EmailBloc>().add(ChangeTab(0));
                 Navigator.pop(context);
               },
             ),
@@ -182,6 +194,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               selected: _currentIndex == 1,
               onTap: () {
                 setState(() => _currentIndex = 1);
+                context.read<EmailBloc>().add(ChangeTab(1));
                 Navigator.pop(context);
               },
             ),
@@ -191,6 +204,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               selected: _currentIndex == 2,
               onTap: () {
                 setState(() => _currentIndex = 2);
+                context.read<EmailBloc>().add(ChangeTab(2));
                 Navigator.pop(context);
               },
             ),
@@ -200,6 +214,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               selected: _currentIndex == 3,
               onTap: () {
                 setState(() => _currentIndex = 3);
+                context.read<EmailBloc>().add(ChangeTab(3));
                 Navigator.pop(context);
               },
             ),
@@ -209,6 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               selected: _currentIndex == 4,
               onTap: () {
                 setState(() => _currentIndex = 4);
+                context.read<EmailBloc>().add(ChangeTab(4));
                 Navigator.pop(context);
               },
             ),
@@ -221,7 +237,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               leading: const Icon(Icons.label),
               title: const Text('Work'),
               onTap: () {
-                // Navigate to label view
                 Navigator.pop(context);
               },
             ),
@@ -504,18 +519,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
+                controller: _keywordController,
                 decoration: const InputDecoration(
                   hintText: 'Search by keyword',
                   prefixIcon: Icon(Icons.search),
                 ),
-                onChanged: (value) {
-                  // Implement search functionality
-                },
               ),
               const SizedBox(height: 10),
               ElevatedButton(
                 onPressed: () {
-                  // Navigate to advanced search
                   Navigator.pop(context);
                   _showAdvancedSearch(context);
                 },
@@ -530,7 +542,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             ),
             TextButton(
               onPressed: () {
-                // Perform search
+                context.read<EmailBloc>().add(
+                  SearchEmail(query: _keywordController.text),
+                );
                 Navigator.pop(context);
               },
               child: const Text('Search'),
@@ -546,131 +560,171 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       context: context,
       isScrollControlled: true,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Advanced Search',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'From',
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'To',
-                  prefixIcon: Icon(Icons.person),
-                ),
-              ),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Subject',
-                  prefixIcon: Icon(Icons.subject),
-                ),
-              ),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Keywords',
-                  prefixIcon: Icon(Icons.search),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Row(
+        bool hasAttachments = _hasAttachments;
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'From Date',
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      onTap: () => _selectDate(context, true),
+                  const Text(
+                    'Advanced Search',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _fromController,
+                    decoration: const InputDecoration(
+                      labelText: 'From',
+                      prefixIcon: Icon(Icons.person),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        labelText: 'To Date',
-                        prefixIcon: Icon(Icons.calendar_today),
-                      ),
-                      onTap: () => _selectDate(context, false),
+                  TextField(
+                    controller: _toController,
+                    decoration: const InputDecoration(
+                      labelText: 'To',
+                      prefixIcon: Icon(Icons.person),
                     ),
+                  ),
+                  TextField(
+                    controller: _subjectController,
+                    decoration: const InputDecoration(
+                      labelText: 'Subject',
+                      prefixIcon: Icon(Icons.subject),
+                    ),
+                  ),
+                  TextField(
+                    controller: _keywordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Keywords',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _fromDateController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            labelText: 'From Date',
+                            prefixIcon: Icon(Icons.calendar_today),
+                          ),
+                          onTap: () => _selectDate(context, true),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller:_toDateController,
+                          readOnly: true,
+                          decoration: const InputDecoration(
+                            labelText: 'To Date',
+                            prefixIcon: Icon(Icons.calendar_today),
+                          ),
+                          onTap: () => _selectDate(context, false),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  CheckboxListTile(
+                    title: const Text('Has attachments'),
+                    value: hasAttachments,
+                    onChanged: (value) {
+                      setModalState(() => hasAttachments = value ?? false);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() => _hasAttachments = hasAttachments);
+                      context.read<EmailBloc>().add(
+                        SearchEmail(
+                          from: _fromController.text,
+                          to: _toController.text,
+                          subject: _subjectController.text,
+                          keyword: _keywordController.text,
+                          fromDate: _fromDate,
+                          toDate: _toDate,
+                          hasAttachments: hasAttachments,
+                        ),
+                      );
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Search'),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              CheckboxListTile(
-                title: const Text('Has attachments'),
-                value: false,
-                onChanged: (value) {},
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // Perform advanced search
-                  Navigator.pop(context);
-                },
-                child: const Text('Search'),
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
+            );
+          },
         );
       },
     );
   }
 
   Future<void> _selectDate(BuildContext context, bool isFromDate) async {
-    final DateTime? picked = await showDatePicker(
+    final now = DateTime.now();
+    final initialDate = isFromDate ? _fromDate ?? now : _toDate ?? now;
+    final firstDate = DateTime(2000);
+    final lastDate = DateTime(now.year + 1);
+
+    final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
     );
+
     if (picked != null) {
-      // Update the corresponding date field
+      setState(() {
+        if (isFromDate) {
+          _fromDate = picked;
+          _fromDateController.text = DateFormat('yyyy-MM-dd').format(picked);
+        } else {
+          _toDate = picked;
+          _toDateController.text = DateFormat('yyyy-MM-dd').format(picked);
+        }
+      });
     }
   }
+}
 
-  void _refreshEmails() {
-    context.read<EmailBloc>().add(RefreshEmails());
-  }
+void _refreshEmails(BuildContext context) {
+  context.read<EmailBloc>().add(RefreshEmails());
+}
 
-  void _createNewLabel(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        String newLabel = '';
-        return AlertDialog(
-          title: const Text('Create New Label'),
-          content: TextField(
-            onChanged: (value) => newLabel = value,
-            decoration: const InputDecoration(hintText: 'Enter label name'),
+void _createNewLabel(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      String newLabel = '';
+      return AlertDialog(
+        title: const Text('Create New Label'),
+        content: TextField(
+          onChanged: (value) => newLabel = value,
+          decoration: const InputDecoration(hintText: 'Enter label name'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                // Save new label
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Label "$newLabel" created')),
-                );
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+          TextButton(
+            onPressed: () {
+              // Save new label
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Label "$newLabel" created')),
+              );
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      );
+    },
+  );
 }

@@ -78,3 +78,37 @@ class NewEmailReceived extends EmailEvent {
 }
 
 class EmailConnectSocket extends EmailEvent {}
+
+class SearchEmail extends EmailEvent {
+  final String? query;
+  final String? from;
+  final String? to;
+  final String? subject;
+  final String? keyword;
+  final DateTime? fromDate;
+  final DateTime? toDate;
+  final bool? hasAttachments;
+
+  SearchEmail({
+    this.query,
+    this.from,
+    this.to,
+    this.subject,
+    this.keyword,
+    this.fromDate,
+    this.toDate,
+    this.hasAttachments,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'from': from,
+      'to': to,
+      'subject': subject,
+      'keyword': keyword,
+      'fromDate': fromDate?.toIso8601String(),
+      'toDate': toDate?.toIso8601String(),
+      'hasAttachments': hasAttachments,
+    };
+  }
+}

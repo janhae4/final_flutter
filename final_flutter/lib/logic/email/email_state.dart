@@ -1,6 +1,5 @@
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
-import 'package:final_flutter/data/models/notification_model.dart';
 abstract class EmailState {}
 
 class EmailInitial extends EmailState {}

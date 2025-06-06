@@ -32,6 +32,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     on<ToggleStarEmail>(_onToggleStarEmail);
     on<MarkEmailAsRead>(_onMarkEmailAsRead);
     on<NewEmailReceived>(_onNewEmailReceived);
+    on<SearchEmail>(_onSearchEmail);
   }
 
   Future<void> _onConnectSocket(
@@ -41,7 +42,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     try {
       emit(EmailLoading());
       await _emailRepository.connectSocket((EmailResponseModel newEmail) {
-        print('New email received: ${newEmail}');
+        print('New email received: $newEmail');
         print('New email received: ${newEmail.id}');
         add(NewEmailReceived(newEmail));
       });
@@ -55,7 +56,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
 
   Future<void> _onLoadEmails(LoadEmails event, Emitter<EmailState> emit) async {
     try {
-      emit(EmailLoading());
+      if (state is EmailLoading) return;
       final emails = await _getEmailsForCurrentTab(event.tab);
       emit(EmailLoaded(emails: emails, currentTab: event.tab));
     } catch (e) {
@@ -70,7 +71,6 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     try {
       emit(EmailLoading());
       final email = await _emailRepository.getEmailDetail(event.id);
-
       await _emailRepository.markRead(event.id);
       await _notificationService.markAsRead(event.id);
 
@@ -97,6 +97,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   ) async {
     final currentState = state;
     if (currentState is EmailLoaded) {
+      emit(EmailLoading());
       emit(currentState.copyWith(isRefreshing: true));
       try {
         final emails = await _getEmailsForCurrentTab(currentState.currentTab);
@@ -214,6 +215,17 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
         return await _emailRepository.getTrash();
       default:
         return await _emailRepository.getEmails();
+    }
+  }
+
+  Future<void> _onSearchEmail(
+    SearchEmail event,
+    Emitter<EmailState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is EmailLoaded) {
+      final emails = await _emailRepository.searchEmails(event);
+      emit(EmailLoaded(emails: emails, currentTab: 0, searchQuery: event.keyword ?? ''));
     }
   }
 

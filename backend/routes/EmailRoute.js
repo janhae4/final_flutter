@@ -6,6 +6,7 @@ const router = express.Router();
 router.use(verifyToken);
 
 router.get('/', EmailController.getAllEmails);
+router.get('/search', EmailController.searchEmails);
 router.get('/sent', EmailController.getSentEmails);
 router.get('/drafts', EmailController.getDrafts);
 router.get('/trash', EmailController.getTrash);

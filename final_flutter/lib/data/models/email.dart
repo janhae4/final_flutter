@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:final_flutter/data/models/email_attachment_model.dart';
 
 class Email {
   final String id;
@@ -14,8 +14,11 @@ class Email {
   bool isRead;
   bool isDraft;
   bool isInTrash;
+  bool isForwarded;
+  bool isReplied;
   List<dynamic> attachments;
   List<dynamic> labels;
+  String originalEmailId;
 
   Email({
     required this.id,
@@ -27,6 +30,9 @@ class Email {
     required this.content,
     required this.plainTextContent,
     required this.time,
+    this.originalEmailId = '',
+    this.isReplied = false,
+    this.isForwarded = false,
     this.starred = false,
     this.isRead = false,
     this.isDraft = false,
@@ -49,10 +55,15 @@ class Email {
       isRead: json['isRead'] as bool,
       isDraft: json['isDraft'] as bool,
       isInTrash: json['isInTrash'] as bool,
-      attachments: List<dynamic>.from(json['attachments'] as List<dynamic>),
+      attachments:
+          (json['attachments'] as List)
+              .map((e) => EmailAttachment.fromJson(e))
+              .toList(),
       labels: List<dynamic>.from(json['labels'] as List<dynamic>),
       time: DateTime.parse(json['createdAt'] as String),
-
+      originalEmailId: json['originalEmailId'] as String? ?? '',
+      isForwarded: json['isForwarded'] as bool,
+      isReplied: json['isReplied'] as bool,
     );
   }
 
@@ -67,7 +78,7 @@ class Email {
       'content': content,
       'plainTextContent': plainTextContent,
       'time': time.toIso8601String(),
-      'attachments': attachments,
+      'attachments': attachments.map((e) => e.toJson()).toList(),
       'labels': labels,
     };
   }
@@ -90,6 +101,9 @@ extension EmailCopy on Email {
     bool? isInTrash,
     List<dynamic>? attachments,
     List<dynamic>? labels,
+    String? originalEmailId,
+    bool? isForwarded,
+    bool? isReplied,
   }) {
     return Email(
       id: id ?? this.id,
@@ -107,6 +121,9 @@ extension EmailCopy on Email {
       isInTrash: isInTrash ?? this.isInTrash,
       attachments: attachments ?? this.attachments,
       labels: labels ?? this.labels,
+      originalEmailId: originalEmailId ?? this.originalEmailId,
+      isForwarded: isForwarded ?? this.isForwarded,
+      isReplied: isReplied ?? this.isReplied,
     );
   }
 }

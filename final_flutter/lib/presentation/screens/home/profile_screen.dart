@@ -1001,7 +1001,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 user?.avatarUrl != null &&
                                 user!.avatarUrl!.isNotEmpty)
                             ? NetworkImage(
-                              'http://localhost:3000/' + user!.avatarUrl!,
+                              'http://localhost:3000/${user!.avatarUrl!}',
                             )
                             : null,
                     child:

@@ -1,42 +1,30 @@
-import 'dart:convert';
-
 import 'package:final_flutter/config/app_theme.dart';
-import 'package:final_flutter/data/models/email_attachment_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'dart:async';
 import 'dart:io';
-
-// Assuming you have these imports for your BLoC
-// import 'package:final_flutter/bloc/email_bloc.dart';
-// import 'package:final_flutter/bloc/email_event.dart';
-// import 'package:final_flutter/bloc/email_state.dart';
 import 'package:final_flutter/data/models/email.dart';
-import 'package:flutter_quill/quill_delta.dart';
 
-class ComposeEmailScreen extends StatefulWidget {
-  final UserModel? user;
-  final Email? replyTo;
-  final Email? forward;
+class ForwardEmailScreen extends StatefulWidget {
+  final UserModel user;
+  final Email originalEmail;
 
-  const ComposeEmailScreen({
-    super.key,
-    required this.user,
-    this.replyTo,
-    this.forward,
+  const ForwardEmailScreen({
+    super.key, 
+    required this.user, 
+    required this.originalEmail
   });
 
   @override
-  State<ComposeEmailScreen> createState() => _ComposeEmailScreenState();
+  State<ForwardEmailScreen> createState() => _ForwardEmailScreenState();
 }
 
-class _ComposeEmailScreenState extends State<ComposeEmailScreen>
+class _ForwardEmailScreenState extends State<ForwardEmailScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
@@ -53,6 +41,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   bool _showCc = false;
   bool _showBcc = false;
   bool _isDraft = false;
+  bool _includeOriginalAttachments = true;
   Timer? _autoSaveTimer;
   final List<PlatformFile> _attachments = [];
 
@@ -74,62 +63,43 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    _initializeFields();
-
+    _initializeForwardFields();
     _startAutoSave();
-
     _animationController.forward();
   }
 
-  void _initializeFields() {
-    if (widget.replyTo != null) {
-      _toController.text = widget.replyTo!.sender;
-      _subjectController.text =
-          widget.replyTo!.subject.startsWith('Re:')
-              ? widget.replyTo!.subject
-              : 'Re: ${widget.replyTo!.subject}';
+  void _initializeForwardFields() {
+    // Set subject with Fwd: prefix
+    _subjectController.text = widget.originalEmail.subject.startsWith('Fwd:')
+        ? widget.originalEmail.subject
+        : 'Fwd: ${widget.originalEmail.subject}';
 
-      // Quote header
-      final quoteHeader =
-          '\n\n--- Original Message ---\n'
-          'From: ${widget.replyTo!.sender}\n'
-          'Subject: ${widget.replyTo!.subject}\n'
-          'Date: ${widget.replyTo!.time}\n\n';
+    // Add forwarded message content
+    final forwardedContent = '''
 
-      final Delta originalDelta = Delta.fromJson(widget.replyTo!.content);
-      final Delta fullDelta = Delta()..insert(quoteHeader);
-      for (final op in originalDelta.toList()) {
-        fullDelta.push(op);
-      }
-      _contentController = QuillController(
-        document: Document.fromDelta(fullDelta),
-        selection: const TextSelection.collapsed(offset: 0),
-      );
-    } else if (widget.forward != null) {
-      _subjectController.text =
-          widget.forward!.subject.startsWith('Fwd:')
-              ? widget.forward!.subject
-              : 'Fwd: ${widget.forward!.subject}';
 
-      final quoteHeader =
-          '\n\n--- Forwarded Message ---\n'
-          'From: ${widget.forward!.sender}\n'
-          'To: ${widget.forward!.to.join(', ')}\n'
-          'Subject: ${widget.forward!.subject}\n'
-          'Date: ${widget.forward!.time}\n\n';
+---------- Forwarded message ----------
+From: ${widget.originalEmail.sender}
+Date: ${_formatDateTime(widget.originalEmail.time)}
+Subject: ${widget.originalEmail.subject}
+To: ${widget.originalEmail.to.join(', ')}
+${widget.originalEmail.cc.isNotEmpty ? 'Cc: ${widget.originalEmail.cc.join(', ')}\n' : ''}
 
-      final Delta forwardDelta = Delta.fromJson(widget.forward!.content);
-      final Delta fullDelta = Delta()..insert(quoteHeader);
-      for (final op in forwardDelta.toList()) {
-        fullDelta.push(op);
-      }
-      _contentController = QuillController(
-        document: Document.fromDelta(fullDelta),
-        selection: const TextSelection.collapsed(offset: 0),
-      );
-    } else {
-      _contentController = QuillController.basic();
-    }
+${widget.originalEmail.plainTextContent ?? ''}''';
+
+    _contentController.document.insert(
+      _contentController.document.length,
+      forwardedContent,
+    );
+
+    _contentController.updateSelection(
+      TextSelection.collapsed(offset: 0),
+      ChangeSource.local,
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.day}/${dateTime.month}/${dateTime.year} at ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   void _startAutoSave() {
@@ -144,7 +114,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         _contentController.document.toPlainText().trim().isNotEmpty) {
       final email = Email(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: widget.user!.email!,
+        sender: widget.user.email!,
         to: _parseEmails(_toController.text),
         cc: _parseEmails(_ccController.text),
         bcc: _parseEmails(_bccController.text),
@@ -153,18 +123,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         plainTextContent: _contentController.document.toPlainText(),
         time: DateTime.now(),
         isDraft: true,
-        attachments:
-            _attachments.map((file) {
-              return EmailAttachment(
-                name: file.name,
-                path: kIsWeb ? null : file.path,
-                bytes: kIsWeb ? base64Encode(file.bytes!): null,
-              );
-            }).toList(),
+        attachments: _getAttachmentPaths(),
+        originalEmailId: widget.originalEmail.id,
       );
-
-      // Dispatch save draft event to BLoC
-      // context.read<EmailBloc>().add(SaveDraftEvent(email));
 
       setState(() {
         _isDraft = true;
@@ -172,11 +133,11 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
 
       // Show subtle feedback
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Draft saved'),
-          duration: const Duration(seconds: 1),
+        const SnackBar(
+          content: Text('Draft saved'),
+          duration: Duration(seconds: 1),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+          margin: EdgeInsets.only(bottom: 100, left: 16, right: 16),
         ),
       );
     }
@@ -188,6 +149,16 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
+  }
+
+  List<String> _getAttachmentPaths() {
+    List<String> paths = _attachments.map((file) => file.path ?? '').toList();
+    
+    if (_includeOriginalAttachments && widget.originalEmail.attachments != null) {
+      paths.addAll(List<String>.from(widget.originalEmail.attachments!));
+    }
+    
+    return paths;
   }
 
   Future<void> _pickAttachments() async {
@@ -203,9 +174,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error picking files: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking files: $e')),
+      );
     }
   }
 
@@ -226,7 +197,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
 
       final email = Email(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: widget.user!.email!,
+        sender: widget.user.email!,
         to: _parseEmails(_toController.text),
         cc: _parseEmails(_ccController.text),
         bcc: _parseEmails(_bccController.text),
@@ -234,31 +205,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         content: _contentController.document.toDelta().toJson(),
         plainTextContent: _contentController.document.toPlainText(),
         time: DateTime.now(),
-        attachments:
-            _attachments.map((file) {
-              return EmailAttachment(
-                name: file.name,
-                path: kIsWeb ? null : file.path,
-                bytes: kIsWeb ? base64Encode(file.bytes!) : null,
-              );
-            }).toList(),
+        attachments: _getAttachmentPaths(),
+        originalEmailId: widget.originalEmail.id,
+        isForwarded: true,
       );
-
-      print('''
-      To: ${email.to}
-      CC: ${email.cc}
-      BCC: ${email.bcc}
-      Subject: ${email.subject}
-      Content: ${_contentController.document.toDelta().toJson()}
-      ''');
 
       // Dispatch send email event to BLoC
       context.read<EmailBloc>().add(SendEmail(email));
 
       // Show confirmation
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Email sent successfully!')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email forwarded successfully!')),
+      );
 
       Navigator.of(context).pop();
     }
@@ -282,13 +240,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.replyTo != null
-              ? 'Reply'
-              : widget.forward != null
-              ? 'Forward'
-              : 'Compose',
-        ),
+        title: const Text('Forward Email'),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.surface,
         actions: [
           // Draft indicator
           if (_isDraft)
@@ -314,14 +268,17 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             onPressed: _pickAttachments,
             tooltip: 'Add attachments',
           ),
+
           // Send button
           Container(
             margin: const EdgeInsets.only(right: 8),
             child: ElevatedButton.icon(
               onPressed: _sendEmail,
-              icon: const Icon(Icons.send, size: 18, color: AppColors.surface),
-              label: const Text('Send'),
+              icon: const Icon(Icons.forward, size: 18, color: AppColors.surface),
+              label: const Text('Forward'),
               style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondary,
+                foregroundColor: AppColors.surface,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 8,
@@ -337,6 +294,47 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
           key: _formKey,
           child: Column(
             children: [
+              // Original Email Info
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha((255 * 0.1).toInt()),
+                  border: Border(
+                    bottom: BorderSide(color: theme.dividerColor, width: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.forward,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Forwarding: ${widget.originalEmail.subject}',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'From: ${widget.originalEmail.sender}',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.surface.withAlpha((255 * 0.7).toInt()),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               // Recipients Section
               Container(
                 padding: const EdgeInsets.all(16),
@@ -405,8 +403,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                 ),
               ),
 
-              // Attachments
-              if (_attachments.isNotEmpty)
+              // Attachments Section
+              if (_attachments.isNotEmpty || 
+                  (widget.originalEmail.attachments?.isNotEmpty ?? false))
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
@@ -418,32 +417,103 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Attachments (${_attachments.length})',
-                        style: theme.textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children:
-                            _attachments.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final file = entry.value;
-                              return Chip(
-                                avatar: Icon(
-                                  _getFileIcon(file.extension ?? ''),
-                                  size: 18,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Attachments',
+                            style: theme.textTheme.titleSmall,
+                          ),
+                          if (widget.originalEmail.attachments?.isNotEmpty ?? false)
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: _includeOriginalAttachments,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _includeOriginalAttachments = value ?? false;
+                                    });
+                                  },
                                 ),
-                                label: Text(
-                                  file.name,
+                                Text(
+                                  'Include original',
                                   style: theme.textTheme.bodySmall,
                                 ),
-                                deleteIcon: const Icon(Icons.close, size: 18),
-                                onDeleted: () => _removeAttachment(index),
-                              );
-                            }).toList(),
+                              ],
+                            ),
+                        ],
                       ),
+                      const SizedBox(height: 8),
+                      
+                      // Original attachments
+                      if (_includeOriginalAttachments && 
+                          (widget.originalEmail.attachments?.isNotEmpty ?? false))
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'From original email:',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.surface.withAlpha((255 * 0.7).toInt()),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: widget.originalEmail.attachments!
+                                  .map((attachment) => Chip(
+                                        avatar: Icon(
+                                          _getFileIcon(_getFileExtension(attachment)),
+                                          size: 18,
+                                        ),
+                                        label: Text(
+                                          _getFileName(attachment),
+                                          style: theme.textTheme.bodySmall,
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                            if (_attachments.isNotEmpty) const SizedBox(height: 12),
+                          ],
+                        ),
+                      
+                      // New attachments
+                      if (_attachments.isNotEmpty)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (_includeOriginalAttachments && 
+                                (widget.originalEmail.attachments?.isNotEmpty ?? false))
+                              Text(
+                                'Additional attachments:',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: AppColors.surface.withAlpha((255 * 0.7).toInt()),
+                                ),
+                              ),
+                            const SizedBox(height: 4),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: _attachments.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final file = entry.value;
+                                return Chip(
+                                  avatar: Icon(
+                                    _getFileIcon(file.extension ?? ''),
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    file.name,
+                                    style: theme.textTheme.bodySmall,
+                                  ),
+                                  deleteIcon: const Icon(Icons.close, size: 18),
+                                  onDeleted: () => _removeAttachment(index),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
                     ],
                   ),
                 ),
@@ -476,12 +546,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                           child: QuillEditor.basic(
                             configurations: QuillEditorConfigurations(
                               controller: _contentController,
-                              // r: false,
-                              sharedConfigurations:
-                                  const QuillSharedConfigurations(
-                                    locale: Locale('en'),
-                                  ),
-                              placeholder: 'Write your message...',
+                              sharedConfigurations: const QuillSharedConfigurations(
+                                locale: Locale('en'),
+                              ),
+                              placeholder: 'Add your message above the forwarded content...',
                               padding: const EdgeInsets.all(16),
                             ),
                           ),
@@ -508,25 +576,26 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: TextFormField(
         controller: controller,
-        decoration: InputDecoration(labelText: label, hintText: hint),
-        validator:
-            isRequired
-                ? (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter at least one recipient';
-                  }
-                  // Basic email validation
-                  final emails = _parseEmails(value);
-                  for (final email in emails) {
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(email)) {
-                      return 'Please enter valid email addresses';
-                    }
-                  }
-                  return null;
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+        ),
+        validator: isRequired
+            ? (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter at least one recipient';
                 }
-                : null,
+                // Basic email validation
+                final emails = _parseEmails(value);
+                for (final email in emails) {
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                      .hasMatch(email)) {
+                    return 'Please enter valid email addresses';
+                  }
+                }
+                return null;
+              }
+            : null,
         keyboardType: TextInputType.emailAddress,
       ),
     );
@@ -554,5 +623,13 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
       default:
         return Icons.attach_file;
     }
+  }
+
+  String _getFileExtension(String filePath) {
+    return filePath.split('.').last;
+  }
+
+  String _getFileName(String filePath) {
+    return filePath.split('/').last;
   }
 }

@@ -129,3 +129,19 @@ exports.restoreFromTrash = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 }
+
+exports.searchEmails = async (req, res) => {
+    try {
+        let email;
+        if (req.query.query) {
+            email = await EmailService.searchEmails(req.user.id, req.query.query);
+        }
+        else
+        {
+            email = await EmailService.advancedSearch(req.user.id, req);
+        }
+        res.json(email);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

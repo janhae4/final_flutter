@@ -1,4 +1,3 @@
-import 'package:final_flutter/data/models/notification_model.dart';
 import 'package:final_flutter/logic/notification/notfication_state.dart';
 import 'package:final_flutter/logic/notification/notification_event.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

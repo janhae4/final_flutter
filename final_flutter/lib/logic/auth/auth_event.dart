@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:final_flutter/data/models/user_model.dart';
-import 'package:image_picker/image_picker.dart';
 
 abstract class AuthEvent {}
 

@@ -1,22 +1,31 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:js_interop';
+
 import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/data/models/email.dart';
+import 'package:final_flutter/data/models/email_attachment_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/logic/email/email_state.dart';
 import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
+import 'package:final_flutter/presentation/screens/email/foward_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:web/web.dart' as html;
+import 'package:path_provider/path_provider.dart';
 
 class EmailDetailScreen extends StatefulWidget {
   final UserModel? user;
   final String id;
 
-  const EmailDetailScreen({Key? key, required this.user, required this.id})
-    : super(key: key);
+  const EmailDetailScreen({super.key, required this.user, required this.id});
 
   @override
   State<EmailDetailScreen> createState() => _EmailDetailScreenState();
@@ -29,7 +38,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   late AnimationController _fabAnimationController;
   late AnimationController _headerAnimationController;
   bool _showMetadata = false;
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void initState() {
@@ -115,7 +124,6 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     setState(() {
       currentEmail = currentEmail?.copyWith(starred: !currentEmail!.starred);
     });
-
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -207,14 +215,44 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   }
 
   void _forwardEmail() {
+    print("FORWARD EMAIL");
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
             (context) =>
-                ComposeEmailScreen(user: widget.user, forward: currentEmail),
+                ComposeEmailScreen(user: widget.user!, forward: currentEmail!),
       ),
     );
+  }
+
+  Future<void> downloadAttachment(EmailAttachment attachment) async {
+    try {
+      final bytes = base64Decode(attachment.bytes!);
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/${attachment.name}');
+      await file.writeAsBytes(bytes);
+
+      print('File saved to ${file.path}');
+
+      await OpenFile.open(file.path);
+    } catch (e) {
+      print('Failed to download: $e');
+    }
+  }
+
+  void downloadAttachmentWeb(EmailAttachment attachment) {
+    final bytes = base64Decode(attachment.bytes!);
+    final blob = html.Blob([bytes] as JSArray<html.BlobPart>);
+    final url = html.URL.createObjectURL(blob);
+    final anchor = html.document.createElement('a') as html.HTMLAnchorElement;
+    anchor.href = url;
+    anchor.style.display = 'none';
+    anchor.download = attachment.name;
+    html.document.body!.append(anchor);
+    anchor.click();
+    html.document.body!.removeChild(anchor);
+    html.URL.revokeObjectURL(url);
   }
 
   Widget _buildSliverAppBar() {
@@ -517,15 +555,30 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
               const SizedBox(height: 16),
               ...currentEmail!.attachments.map((attachment) {
                 return ListTile(
-                  leading: const Icon(Icons.insert_drive_file),
-                  title: Text(attachment),
+                  leading:
+                      attachment.bytes != null &&
+                                  attachment.name.endsWith('.png') ||
+                              attachment.name.endsWith('.jpg') ||
+                              attachment.name.endsWith('.jpeg')
+                          ? Image.memory(
+                            base64Decode(attachment.bytes!),
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          )
+                          : const Icon(Icons.insert_drive_file),
+                  title: Text(attachment.name),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
                         icon: const Icon(Icons.download),
                         onPressed: () {
-                          // Download attachment
+                          if (kIsWeb) {
+                            downloadAttachmentWeb(attachment);
+                          } else {
+                            downloadAttachment(attachment);
+                          }
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text('Downloading $attachment...'),
@@ -533,17 +586,11 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                           );
                         },
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.share),
-                        onPressed: () {
-                          // Share attachment
-                        },
-                      ),
                     ],
                   ),
                   contentPadding: EdgeInsets.zero,
                 );
-              }).toList(),
+              }),
             ],
           ),
         ),

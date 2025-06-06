@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
-import 'package:final_flutter/service/notification_service.dart';
+import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/service/socket_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,12 +47,12 @@ class EmailRepository {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode != 200) {
-      print(123123123);
       final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
       throw Exception(errorMessage);
     }
 
     final json = jsonDecode(res.body);
+    print(json);
     return Email.fromJson(json);
   }
 
@@ -199,6 +199,43 @@ class EmailRepository {
       final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
       throw Exception(errorMessage);
     }
+  }
+
+  Future<List<EmailResponseModel>> searchEmails(SearchEmail event) async {
+    final token = await getToken();
+
+    final uri = Uri.parse('$backendUrl/search').replace(
+      queryParameters: {
+        if (event.query != null && event.query!.isNotEmpty)
+          'query': event.query,
+        if (event.from != null && event.from!.isNotEmpty) 'from': event.from,
+        if (event.to != null && event.to!.isNotEmpty) 'to': event.to,
+        if (event.subject != null && event.subject!.isNotEmpty)
+          'subject': event.subject,
+        if (event.keyword != null && event.keyword!.isNotEmpty)
+          'keyword': event.keyword,
+        if (event.fromDate != null)
+          'fromDate': event.fromDate!.toIso8601String(),
+        if (event.toDate != null) 'toDate': event.toDate!.toIso8601String(),
+        if (event.hasAttachments != null)
+          'hasAttachments': event.hasAttachments.toString(),
+      },
+    );
+
+    final res = await http.get(
+      uri,
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (res.statusCode != 200) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Search failed';
+      throw Exception(errorMessage);
+    }
+
+    final json = jsonDecode(res.body);
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
   }
 
   void dispose() {
