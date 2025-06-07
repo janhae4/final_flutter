@@ -121,6 +121,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     final currentState = state;
     if (currentState is EmailLoaded) {
       final emails = await _getEmailsForCurrentTab(event.index);
+      emit(EmailLoading()); 
       emit(currentState.copyWith(currentTab: event.index, emails: emails));
     }
   }

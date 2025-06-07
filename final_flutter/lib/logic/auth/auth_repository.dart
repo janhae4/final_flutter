@@ -8,7 +8,6 @@ import 'package:final_flutter/data/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http_parser/http_parser.dart';
 
-
 class AuthRepository {
   final String backendUrl = 'http://localhost:3000/api/auth';
 
@@ -211,7 +210,10 @@ class AuthRepository {
     return UserModel.fromJson(json['user']);
   }
 
-  Future<UserModel> uploadImageToBackendWeb(Uint8List bytes, String fileName) async {
+  Future<UserModel> uploadImageToBackendWeb(
+    Uint8List bytes,
+    String fileName,
+  ) async {
     final token = await getToken();
     final url = Uri.parse('$backendUrl/upload-profile-picture');
 
@@ -249,7 +251,8 @@ class AuthRepository {
     );
 
     if (res.statusCode != 201) {
-      final errorMessage = jsonDecode(res.body)['message'] ?? 'Add label failed';
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Add label failed';
       throw Exception(errorMessage);
     }
 
@@ -270,7 +273,8 @@ class AuthRepository {
     );
 
     if (res.statusCode != 200) {
-      final errorMessage = jsonDecode(res.body)['message'] ?? 'Remove label failed';
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Remove label failed';
       throw Exception(errorMessage);
     }
 
@@ -287,7 +291,8 @@ class AuthRepository {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode != 200) {
-      final errorMessage = jsonDecode(res.body)['message'] ?? 'Get labels failed';
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Get labels failed';
       throw Exception(errorMessage);
     }
     final json = jsonDecode(res.body);
@@ -306,12 +311,29 @@ class AuthRepository {
     );
 
     if (res.statusCode != 200) {
-      final errorMessage = jsonDecode(res.body)['message'] ?? 'Update label failed';
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Update label failed';
       throw Exception(errorMessage);
     }
     final json = jsonDecode(res.body);
     return List<LabelModel>.from(
       json['labels'].map((label) => LabelModel.fromJson(label)),
     );
+  }
+
+  Future<String> recoveryPassword(String otp) async {
+    final token = await getToken();
+    final res = await http.post(
+      Uri.parse('$backendUrl/recovery-password'),
+      headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+      body: jsonEncode({'otp': otp}),
+    );
+    if (res.statusCode != 200) {
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Recovery password failed';
+      throw Exception(errorMessage);
+    }
+    final json = jsonDecode(res.body);
+    return json['password'];
   }
 }

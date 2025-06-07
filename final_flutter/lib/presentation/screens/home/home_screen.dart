@@ -120,6 +120,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               if (emailState is EmailError) {
                 _showSnackBar(context, emailState.message, isError: true);
               }
+              if (emailState is EmailLoading) {
+                _buildLoadingState();
+              }
             },
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
