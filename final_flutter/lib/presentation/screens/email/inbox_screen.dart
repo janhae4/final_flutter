@@ -211,7 +211,6 @@ class _InboxScreenState extends State<InboxScreen>
   }
 
   Widget _buildEmailListView(List<EmailResponseModel> emails) {
-    print (emails[0].labels);
     if (emails.isEmpty) {
       return _buildEmptyState();
     }

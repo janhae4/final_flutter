@@ -38,6 +38,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     on<RemoveLabelFromEmail>(_onRemoveLabelFromEmail);
     on<DraftEmail>(_onDraftEmail);
     on<DeleteDraft>(_onDeleteDraft);
+  
   }
 
   Future<void> _onConnectSocket(

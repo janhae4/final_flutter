@@ -130,6 +130,7 @@ exports.moveToTrash = async (id) => Email.findByIdAndUpdate(id, { isInTrash: tru
 exports.restoreEmail = async (id) => Email.findByIdAndUpdate(id, { isInTrash: false }, { new: true });
 
 exports.searchEmails = async (userId, query) => {
+    console.log("Search Query:", query);
     const regex = new RegExp(query, 'i');
 
     return await Email.find({
@@ -189,6 +190,7 @@ exports.advancedSearch = async (userId, req) => {
 
 
 exports.getEmailsByLabel = async (userId, label) => {
+    console.log(label)
     return await Email.find({
         $and: [
             {
@@ -197,7 +199,7 @@ exports.getEmailsByLabel = async (userId, label) => {
                     { receiverIds: userId }
                 ]
             },
-            // { labels: { $elemMatch: { label: label._id } } },
+            { labels: { $elemMatch: { _id : label } } },
             { isInTrash: false }
         ]
     }).sort({ createdAt: -1 });
