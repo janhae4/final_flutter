@@ -94,7 +94,17 @@ exports.deleteEmail = async (id) => Email.findByIdAndDelete(id);
 
 exports.getSentEmails = async (userId) => Email.find({ senderId: userId }).sort({ createdAt: -1 });
 
-exports.getStarredEmails = async (userId) => Email.find({ senderId: userId, starred: true }).sort({ createdAt: -1 });
+exports.getStarredEmails = async (userId) => Email.find({
+    $and: [
+        {
+            $or: [
+                { senderId: userId },
+                { receiverIds: userId }
+            ]
+         },
+        { starred: true }
+    ]
+}).sort({ createdAt: -1 });
 
 exports.getDrafts = async (userId) => Email.find({ senderId: userId, isDraft: true }).sort({ createdAt: -1 });
 
