@@ -66,11 +66,26 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
+
+    _toController.addListener(_onFieldChanged);
+    _ccController.addListener(_onFieldChanged);
+    _bccController.addListener(_onFieldChanged);
+    _subjectController.addListener(_onFieldChanged);
+
     if (widget.emailId != null) {
       context.read<EmailBloc>().add(LoadEmailDetail(widget.emailId));
     }
+
     _initializeEditor();
     _playEntranceAnimation();
+  }
+
+  void _onFieldChanged() {
+    _autoSaveTimer?.cancel();
+    _autoSaveTimer = Timer(const Duration(seconds: 5), () {
+      _isDraft = true;
+      _sendEmail(true);
+    });
   }
 
   void _initializeAnimations() {
@@ -182,50 +197,52 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   }
 
   void _sendEmail(bool isDraft) {
-    if (_formKey.currentState!.validate()) {
-      if (_toController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter at least one recipient')),
-        );
-        return;
-      }
-
-      final email = Email(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: widget.user!.email!,
-        to: _parseEmails(_toController.text),
-        cc: _parseEmails(_ccController.text),
-        bcc: _parseEmails(_bccController.text),
-        subject: _subjectController.text,
-        content: _contentController.document.toDelta().toJson(),
-        plainTextContent: _contentController.document.toPlainText(),
-        time: DateTime.now(),
-        attachments:
-            _attachments.map((file) {
-              return EmailAttachment(
-                name: file.name,
-                path: kIsWeb ? null : file.path,
-                bytes: kIsWeb ? base64Encode(file.bytes!) : null,
-              );
-            }).toList(),
-        attachmentCount: _attachments.length,
-        isReplied: widget.replyTo != null ? true : false,
-        isForwarded: widget.forward != null ? true : false,
-        originalEmailId: widget.replyTo?.id ?? widget.forward?.id ?? '',
-        isDraft: _isDraft,
+    if (!isDraft && !_formKey.currentState!.validate()) {
+      return;
+    }
+    if (!isDraft && _toController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter at least one recipient')),
       );
-      context.read<EmailBloc>().add(SendEmail(email));
+      return;
+    }
 
-      if (isDraft) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Draft saved successfully!')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email sent successfully!')),
-        );
-        Navigator.of(context).pop();
-      }
+    final email = Email(
+      id: _email?.id ?? '',
+      sender: widget.user!.email!,
+      to: _parseEmails(_toController.text),
+      cc: _parseEmails(_ccController.text),
+      bcc: _parseEmails(_bccController.text),
+      subject: _subjectController.text,
+      content: _contentController.document.toDelta().toJson(),
+      plainTextContent: _contentController.document.toPlainText(),
+      time: DateTime.now(),
+      attachments:
+          _attachments.map((file) {
+            return EmailAttachment(
+              name: file.name,
+              path: kIsWeb ? null : file.path,
+              bytes: kIsWeb ? base64Encode(file.bytes!) : null,
+            );
+          }).toList(),
+      attachmentCount: _attachments.length,
+      isReplied: widget.replyTo != null ? true : false,
+      isForwarded: widget.forward != null ? true : false,
+      originalEmailId: widget.replyTo?.id ?? widget.forward?.id ?? '',
+      isDraft: _isDraft,
+    );
+
+    if (isDraft) {
+      context.read<EmailBloc>().add(DraftEmail(email));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Draft saved successfully!')),
+      );
+    } else {
+      context.read<EmailBloc>().add(SendEmail(email));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Email sent successfully!')));
+      Navigator.of(context).pop();
     }
   }
 
@@ -337,22 +354,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         ],
       ),
       actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha((255 * 0.2).toInt()),
-              borderRadius: BorderRadius.circular(12),
+        if (_isDraft)
+          IconButton(
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha((255 * 0.2).toInt()),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.save, color: Colors.white, size: 20),
             ),
-            child: const Icon(Icons.save, color: Colors.white, size: 20),
+            onPressed: () => _sendEmail(true),
           ),
-          onPressed: () {
-            setState(() {
-              _isDraft = true;
-              _sendEmail(true);
-            });
-          },
-        ),
         IconButton(
           icon: Container(
             padding: const EdgeInsets.all(8),
@@ -517,15 +530,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
           filled: true,
           fillColor: Colors.grey.shade50,
         ),
-        validator:
-            isRequired
-                ? (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'This field is required';
-                  }
-                  return null;
-                }
-                : null,
+        validator: null,
       ),
     );
   }

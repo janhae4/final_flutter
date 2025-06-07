@@ -45,28 +45,28 @@ class Email {
 
   factory Email.fromJson(Map<String, dynamic> json) {
     return Email(
-      id: json['_id'] as String ? ?? '',
-      sender: json['sender'] as String  ? ?? '',
-      to: List<dynamic>.from(json['to'] as List<dynamic>) ,
-      cc: List<dynamic>.from(json['cc'] as List<dynamic>),
-      bcc: List<dynamic>.from(json['bcc'] as List<dynamic>),
-      subject: json['subject'] as String ? ?? '',
-      content: json['content'] as List<dynamic> ? ?? [],
-      plainTextContent: json['plainTextContent'] as String ? ?? '',
-      starred: json['starred'] as bool ? ?? false,
-      isRead: json['isRead'] as bool ? ?? false,
-      isDraft: json['isDraft'] as bool ? ?? false,
-      isInTrash: json['isInTrash'] as bool ? ?? false,
+      id: json['_id'] ?? '',
+      sender: json['sender'] ?? '',
+      to: List<dynamic>.from(json['to'] ?? []),
+      cc: List<dynamic>.from(json['cc'] ?? []),
+      bcc: List<dynamic>.from(json['bcc'] ?? []),
+      subject: json['subject'] ?? '',
+      content: json['content'] ?? [],
+      plainTextContent: json['plainTextContent'] ?? '',
+      starred: json['starred'] ?? false,
+      isRead: json['isRead'] ?? false,
+      isDraft: json['isDraft'] ?? false,
+      isInTrash: json['isInTrash'] ?? false,
       attachments:
-          (json['attachments'] as List)
-              .map((e) => EmailAttachment.fromJson(e))
+          (json['attachments'] ?? [])
+              .map<EmailAttachment>((e) => EmailAttachment.fromJson(e))
               .toList(),
-      attachmentCount: json['attachmentsCount'] as int? ?? 0,
-      labels: List<dynamic>.from(json['labels'] as List<dynamic>),
-      time: DateTime.parse(json['createdAt'] as String),
-      originalEmailId: json['originalEmailId'] as String? ?? '',
-      isForwarded: json['isForwarded'] as bool ? ?? false,
-      isReplied: json['isReplied'] as bool ? ?? false,
+      attachmentCount: json['attachmentsCount'] ?? 0,
+      labels: List<dynamic>.from(json['labels'] ?? []),
+      time: DateTime.parse(json['createdAt']),
+      originalEmailId: json['originalEmailId'] ?? '',
+      isForwarded: json['isForwarded'] ?? false,
+      isReplied: json['isReplied'] ?? false,
     );
   }
 
@@ -105,7 +105,7 @@ extension EmailCopy on Email {
     bool? starred,
     bool? isRead,
     bool? isDraft,
-    bool? isInTrash,  
+    bool? isInTrash,
     List<dynamic>? attachments,
     List<dynamic>? labels,
     String? originalEmailId,

@@ -44,3 +44,8 @@ class EmailError extends EmailState {
   final String message;
   EmailError(this.message);
 }
+
+class DraftEmailSuccess extends EmailState {
+  final Email email;
+  DraftEmailSuccess(this.email);
+}

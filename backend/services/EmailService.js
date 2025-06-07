@@ -19,19 +19,21 @@ const saveEmail = async (userId, data) => {
     ]);
 
     const allReceivers = [...receivers, ...ccs, ...bccs];
-    console.log("All Receivers:", allReceivers);
-    return await Email.create({
+
+    const emailPayload = {
         ...data,
         senderId: userId,
         receiverIds: allReceivers,
         attachmentsCount: data.attachments ? data.attachments.length : 0,
-    });
-}
+    };
+
+    return await Email.create(emailPayload);
+};
+
+
 exports.createEmail = async (userId, data) => {
 
     const newEmail = await saveEmail(userId, data);
-
-    if (newEmail.isDraft) return newEmail;
 
     newEmail.receiverIds.forEach(receiverId => {
         const socket = userSockets.get(receiverId.toString());
@@ -48,6 +50,8 @@ exports.createEmail = async (userId, data) => {
 
     return newEmail;
 }
+
+exports.updateEmail = async (id, data) => Email.findByIdAndUpdate(id, data, { new: true }).select('+receiverIds +bcc +cc +content +attachments +isReplied +isForwarded +originalEmailId +starred +isDraft +isInTrash +isSpam');
 
 exports.getAllEmails = async (id) =>
     Email.find({
@@ -101,7 +105,7 @@ exports.getStarredEmails = async (userId) => Email.find({
                 { senderId: userId },
                 { receiverIds: userId }
             ]
-         },
+        },
         { starred: true }
     ]
 }).sort({ createdAt: -1 });
@@ -199,7 +203,7 @@ exports.getEmailsByLabel = async (userId, label) => {
                     { receiverIds: userId }
                 ]
             },
-            { labels: { $elemMatch: { _id : label } } },
+            { labels: { $elemMatch: { _id: label } } },
             { isInTrash: false }
         ]
     }).sort({ createdAt: -1 });
@@ -238,3 +242,5 @@ exports.getEmailLabels = async (userId, labelId) => Email.find({
 })
     .sort({ createdAt: -1 })
     .select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
+
+exports.getEmailSpam = async (userId) => Email.find({ senderId: userId, isSpam: true }).sort({ createdAt: -1 }).select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');

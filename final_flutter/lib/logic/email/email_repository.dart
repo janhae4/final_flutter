@@ -293,21 +293,42 @@ class EmailRepository {
     }
   }
 
-  Future<void> saveDraft(Email email) async {
+  Future<Email> saveDraft(Email email) async {
     final token = await getToken();
-    final res = await http.post(
-      Uri.parse('$backendUrl/drafts'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(email.toJson()),
-    );
-    if (res.statusCode != 201) {
+    final isNew = email.id.isEmpty;
+
+    final url =
+        isNew
+            ? Uri.parse('$backendUrl') // POST to create
+            : Uri.parse('$backendUrl/${email.id}'); // PATCH to update
+
+    final res =
+        await (isNew
+            ? http.post(
+              url,
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode(email.toJson()),
+            )
+            : http.patch(
+              url,
+              headers: {
+                'Authorization': 'Bearer $token',
+                'Content-Type': 'application/json',
+              },
+              body: jsonEncode(email.toJson()),
+            ));
+
+    if (res.statusCode != 200 && res.statusCode != 201) {
       final errorMessage =
           jsonDecode(res.body)['message'] ?? 'Save draft failed';
       throw Exception(errorMessage);
     }
+
+    final data = jsonDecode(res.body);
+    return Email.fromJson(data);
   }
 
   Future<void> deleteDraft(String id) async {

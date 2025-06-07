@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const emailSchema = new mongoose.Schema({
     senderId: { type: String, select: false, index: true },
     sender: { type: String, required: true },
-    to: { type: [String], required: true },
+    to: { type: [String], required: true, default: [] },
     receiverIds: { type: [String], default: [], select: false },
     cc: { type: [String], default: [], select: false },
     bcc: { type: [String], default: [], select: false },

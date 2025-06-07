@@ -1,5 +1,6 @@
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/data/models/email_thread.dart';
 import 'package:final_flutter/data/models/notification_model.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/logic/email/email_repository.dart';
@@ -288,7 +289,8 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   Future<void> _onDraftEmail(DraftEmail event, Emitter<EmailState> emit) async {
     try {
       emit(EmailLoading());
-      await _emailRepository.saveDraft(event.email);
+      final email = await _emailRepository.saveDraft(event.email);
+      emit(EmailDetailLoaded(EmailThread(email: email)));
     } catch (e) {
       emit(EmailError(e.toString()));
     }
