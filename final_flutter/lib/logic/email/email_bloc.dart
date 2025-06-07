@@ -41,7 +41,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     try {
       emit(EmailLoading());
       await _emailRepository.connectSocket((EmailResponseModel newEmail) {
-        print('New email received: ${newEmail}');
+        print('New email received: $newEmail');
         print('New email received: ${newEmail.id}');
         add(NewEmailReceived(newEmail));
       });

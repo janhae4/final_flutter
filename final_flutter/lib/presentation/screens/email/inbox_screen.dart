@@ -12,8 +12,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class InboxScreen extends StatefulWidget {
   final UserModel? user;
   final int tabIndex;
-  const InboxScreen({Key? key, required this.user, required this.tabIndex})
-    : super(key: key);
+  const InboxScreen({super.key, required this.user, required this.tabIndex});
 
   @override
   _InboxScreenState createState() => _InboxScreenState();
@@ -457,7 +456,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   }
 
   Widget _buildEmptyState() {
-    return Container(
+    return SizedBox(
       height: 400,
       child: Center(
         child: Column(
@@ -486,7 +485,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   }
 
   Widget _buildErrorState(String message) {
-    return Container(
+    return SizedBox(
       height: 400,
       child: Center(
         child: Column(

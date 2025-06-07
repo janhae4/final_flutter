@@ -8,6 +8,11 @@ import 'package:final_flutter/logic/auth/auth_repository.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/presentation/screens/auth/splash_screen.dart';
+import 'logic/settings/settings_bloc.dart';
+import 'logic/settings/settings_state.dart';
+import 'logic/settings/settings_event.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
 void main() async {
   final authRepository = AuthRepository();
@@ -44,14 +49,29 @@ class MyApp extends StatelessWidget {
                 notificationBloc: notificationBloc,
               ),
         ),
+        BlocProvider<SettingsBloc>(create: (_) => SettingsBloc()),
       ],
-      child: MaterialApp(
-        title: 'Flutter App',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const SplashScreen(),
+      child: BlocBuilder<SettingsBloc, SettingsState>(
+        builder: (context, state) {
+          return MaterialApp(
+            title: 'Flutter App',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const SplashScreen(),
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+              FlutterQuillLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+              // Thêm các locale khác nếu muốn hỗ trợ
+            ],
+          );
+        },
       ),
     );
   }

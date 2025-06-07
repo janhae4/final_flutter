@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
-import 'package:final_flutter/service/notification_service.dart';
 import 'package:final_flutter/service/socket_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';

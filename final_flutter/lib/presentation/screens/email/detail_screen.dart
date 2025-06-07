@@ -15,8 +15,7 @@ class EmailDetailScreen extends StatefulWidget {
   final UserModel? user;
   final String id;
 
-  const EmailDetailScreen({Key? key, required this.user, required this.id})
-    : super(key: key);
+  const EmailDetailScreen({super.key, required this.user, required this.id});
 
   @override
   State<EmailDetailScreen> createState() => _EmailDetailScreenState();
@@ -29,7 +28,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   late AnimationController _fabAnimationController;
   late AnimationController _headerAnimationController;
   bool _showMetadata = false;
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   void initState() {
@@ -398,17 +397,27 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   }
 
   Widget _buildEmailContent() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Card(
         elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        color: isDark
+            ? Theme.of(context).colorScheme.surfaceContainerLowest
+            : Colors.white,
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: QuillEditor.basic(
-            configurations: QuillEditorConfigurations(
-              controller: _quillController!,
-            ),
-          ),
+          child: _quillController == null
+              ? const SizedBox.shrink()
+              : QuillEditor.basic(
+                  controller: _quillController!,
+                  config: QuillEditorConfig(
+                    // Thêm các tham số hợp lệ nếu muốn, ví dụ:
+                    // placeholder: 'Write your message...',
+                    // padding: EdgeInsets.all(16),
+                  ),
+                ),
         ),
       ),
     );
@@ -543,7 +552,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                   ),
                   contentPadding: EdgeInsets.zero,
                 );
-              }).toList(),
+              }),
             ],
           ),
         ),

@@ -1,5 +1,3 @@
-import 'package:final_flutter/logic/email/email_bloc.dart';
-import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';

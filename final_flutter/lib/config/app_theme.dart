@@ -1,4 +1,4 @@
-  // lib/config/app_theme.dart
+// lib/config/app_theme.dart
   import 'package:flutter/material.dart';
 
   class AppColors {
@@ -322,7 +322,7 @@
           secondaryContainer: AppColors.secondaryDark,
           tertiary: AppColors.accent,
           tertiaryContainer: AppColors.accentDark,
-          surface: Color(0xFF1E1E1E),
+          surface: Color(0xFF23272F), // Sáng hơn mặc định
           error: AppColors.error,
           onPrimary: AppColors.textOnPrimary,
           onSecondary: AppColors.textOnPrimary,
@@ -330,6 +330,35 @@
           onError: AppColors.textOnPrimary,
           outline: Color(0xFF424242),
           shadow: Colors.black54,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF23272F), // Sáng hơn
+        cardColor: const Color(0xFF2C313A), // Card sáng hơn
+        dialogBackgroundColor: const Color(0xFF23272F),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF2C313A), // TextField sáng hơn
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF424242)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF424242)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.error),
+          ),
+          labelStyle: const TextStyle(color: Colors.white70),
+          hintStyle: const TextStyle(color: Colors.white38),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
         ),
       );
     }

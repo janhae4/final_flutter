@@ -1001,7 +1001,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 user?.avatarUrl != null &&
                                 user!.avatarUrl!.isNotEmpty)
                             ? NetworkImage(
-                              'http://localhost:3000/' + user!.avatarUrl!,
+                              'http://localhost:3000/${user!.avatarUrl!}',
                             )
                             : null,
                     child:
@@ -1096,7 +1096,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Container(
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topRight: Radius.circular(12),
           bottomRight: Radius.circular(12),
         ),

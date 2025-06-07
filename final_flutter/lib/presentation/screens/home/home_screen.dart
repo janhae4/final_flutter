@@ -4,17 +4,15 @@ import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
-import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/logic/email/email_state.dart';
 import 'package:final_flutter/logic/notification/notfication_state.dart';
 import 'package:final_flutter/logic/notification/notification_bloc.dart';
 import 'package:final_flutter/logic/notification/notification_event.dart';
 import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
-import 'package:final_flutter/presentation/screens/email/detail_screen.dart';
 import 'package:final_flutter/presentation/screens/email/inbox_screen.dart';
 import 'package:final_flutter/presentation/screens/home/profile_screen.dart';
+import 'package:final_flutter/presentation/screens/home/settings_screen.dart';
 import 'package:final_flutter/service/notification_service.dart';
-import 'package:final_flutter/service/socket_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
@@ -22,6 +20,7 @@ import 'package:final_flutter/logic/auth/auth_event.dart';
 import 'package:final_flutter/presentation/screens/auth/login_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:badges/badges.dart' as badges;
+import 'package:final_flutter/logic/settings/settings_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -474,10 +473,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _navigateToSettings(BuildContext context) {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => const SettingsScreen()),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: context.read<SettingsBloc>(),
+          child: const SettingsScreen(),
+        ),
+      ),
+    );
   }
 
   void _navigateToProfile(BuildContext context) {

@@ -8,6 +8,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:final_flutter/logic/settings/settings_bloc.dart';
+import 'package:dart_quill_delta/dart_quill_delta.dart';
 
 // Assuming you have these imports for your BLoC
 // import 'package:final_flutter/bloc/email_bloc.dart';
@@ -20,8 +22,7 @@ class ComposeEmailScreen extends StatefulWidget {
   final Email? replyTo;
   final Email? forward;
 
-  const ComposeEmailScreen({Key? key, required this.user, this.replyTo, this.forward})
-    : super(key: key);
+  const ComposeEmailScreen({super.key, required this.user, this.replyTo, this.forward});
 
   @override
   State<ComposeEmailScreen> createState() => _ComposeEmailScreenState();
@@ -45,17 +46,35 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   bool _showBcc = false;
   bool _isDraft = false;
   Timer? _autoSaveTimer;
-  List<PlatformFile> _attachments = [];
+  final List<PlatformFile> _attachments = [];
 
   // Animation
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
+  // Font riêng cho compose
+  late String _composeFontFamily;
+  late double _composeFontSize;
+
   @override
   void initState() {
     super.initState();
 
-    _contentController = QuillController.basic();
+    // Lấy font mặc định từ settings
+    final settings = context.read<SettingsBloc>().state;
+    final defaultFont = settings.fontFamily;
+    final defaultFontSize = settings.fontSize;
+
+    // Font và size riêng cho compose, mặc định lấy từ settings
+    _composeFontFamily = defaultFont;
+    _composeFontSize = defaultFontSize;
+
+    // Luôn khởi tạo QuillController với Delta có style mặc định
+    final delta = Delta()..insert("\n", {"font": defaultFont, "size": defaultFontSize});
+    _contentController = QuillController(
+      document: Document.fromDelta(delta),
+      selection: const TextSelection.collapsed(offset: 0),
+    );
 
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -65,14 +84,14 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    _initializeFields();
+    _initializeFields(defaultFont, defaultFontSize);
 
     _startAutoSave();
 
     _animationController.forward();
   }
 
-  void _initializeFields() {
+  void _initializeFields(String defaultFont, double defaultFontSize) {
     if (widget.replyTo != null) {
       _toController.text = widget.replyTo!.sender;
       _subjectController.text =
@@ -80,7 +99,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
               ? widget.replyTo!.subject
               : 'Re: ${widget.replyTo!.subject}';
 
-      // Add quoted original message
+      // Add quoted original message với style mặc định
       final originalContent =
           '\n\n--- Original Message ---\n'
           'From: ${widget.replyTo!.sender}\n'
@@ -88,17 +107,16 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
           'Date: ${widget.replyTo!.time}\n\n'
           '${widget.replyTo!.content}';
 
-      _contentController.document.insert(
-        _contentController.document.length,
-        originalContent,
-      );
+      final styledDelta = Delta()
+        ..insert(originalContent, {"font": defaultFont, "size": defaultFontSize});
+      _contentController.document.compose(styledDelta, ChangeSource.local);
     } else if (widget.forward != null) {
       _subjectController.text =
           widget.forward!.subject.startsWith('Fwd:')
               ? widget.forward!.subject
               : 'Fwd: ${widget.forward!.subject}';
 
-      // Add forwarded message
+      // Add forwarded message với style mặc định
       final forwardContent =
           '\n\n--- Forwarded Message ---\n'
           'From: ${widget.forward!.sender}\n'
@@ -107,10 +125,9 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
           'Date: ${widget.forward!.time}\n\n'
           '${widget.forward!.content}';
 
-      _contentController.document.insert(
-        _contentController.document.length,
-        forwardContent,
-      );
+      final styledDelta = Delta()
+        ..insert(forwardContent, {"font": defaultFont, "size": defaultFontSize});
+      _contentController.document.compose(styledDelta, ChangeSource.local);
     }
   }
 
@@ -247,6 +264,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final settings = context.read<SettingsBloc>().state;
+    final defaultFont = settings.fontFamily;
 
     return Scaffold(
       appBar: AppBar(
@@ -423,11 +442,89 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                   child: Column(
                     children: [
                       // Toolbar
-                      QuillToolbar.simple(
-                        configurations: QuillSimpleToolbarConfigurations(
-                          controller: _contentController,
-                          sharedConfigurations: const QuillSharedConfigurations(
-                            locale: Locale('en'),
+                      QuillSimpleToolbar(
+                        controller: _contentController,
+                        initialFontFamily: _composeFontFamily,
+                        config: QuillSimpleToolbarConfig(
+                          buttonOptions: QuillSimpleToolbarButtonOptions(
+                            fontFamily: QuillToolbarFontFamilyButtonOptions(
+                              items: {
+                                'Roboto': 'Roboto',
+                                'Montserrat': 'Montserrat',
+                                'NotoSans': 'NotoSans',
+                                'Lato': 'Lato',
+                              },
+                              onSelected: (val) {
+                                setState(() {
+                                  _composeFontFamily = val;
+                                  bool insertedTemp = false;
+                                  if (_contentController.document.length <= 1) {
+                                    _contentController.replaceText(0, 0, 'a', null);
+                                    insertedTemp = true;
+                                  }
+                                  _contentController.formatText(
+                                    0,
+                                    _contentController.document.length - 1,
+                                    Attribute.fromKeyValue('font', val),
+                                  );
+                                  int offset = 0;
+                                  final plainText = _contentController.document.toPlainText();
+                                  for (int i = 0; i < plainText.length; i++) {
+                                    if (plainText[i] != '\n') {
+                                      offset = i;
+                                      break;
+                                    }
+                                  }
+                                  _contentController.updateSelection(
+                                    TextSelection.collapsed(offset: offset),
+                                    ChangeSource.local,
+                                  );
+                                  _contentController.formatSelection(Attribute.fromKeyValue('font', val));
+                                  if (insertedTemp) {
+                                    _contentController.replaceText(0, 1, '', null);
+                                  }
+                                });
+                              },
+                            ),
+                            fontSize: QuillToolbarFontSizeButtonOptions(
+                              items: {
+                                '14': '14',
+                                '16': '16',
+                                '18': '18',
+                                '20': '20',
+                              },
+                              onSelected: (val) {
+                                setState(() {
+                                  _composeFontSize = double.tryParse(val) ?? _composeFontSize;
+                                  bool insertedTemp = false;
+                                  if (_contentController.document.length <= 1) {
+                                    _contentController.replaceText(0, 0, 'a', null);
+                                    insertedTemp = true;
+                                  }
+                                  _contentController.formatText(
+                                    0,
+                                    _contentController.document.length - 1,
+                                    Attribute.fromKeyValue('size', val),
+                                  );
+                                  int offset = 0;
+                                  final plainText = _contentController.document.toPlainText();
+                                  for (int i = 0; i < plainText.length; i++) {
+                                    if (plainText[i] != '\n') {
+                                      offset = i;
+                                      break;
+                                    }
+                                  }
+                                  _contentController.updateSelection(
+                                    TextSelection.collapsed(offset: offset),
+                                    ChangeSource.local,
+                                  );
+                                  _contentController.formatSelection(Attribute.fromKeyValue('size', val));
+                                  if (insertedTemp) {
+                                    _contentController.replaceText(0, 1, '', null);
+                                  }
+                                });
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -442,13 +539,8 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: QuillEditor.basic(
-                            configurations: QuillEditorConfigurations(
-                              controller: _contentController,
-                              // r: false,
-                              sharedConfigurations:
-                                  const QuillSharedConfigurations(
-                                    locale: Locale('en'),
-                                  ),
+                            controller: _contentController,
+                            config: QuillEditorConfig(
                               placeholder: 'Write your message...',
                               padding: const EdgeInsets.all(16),
                             ),
