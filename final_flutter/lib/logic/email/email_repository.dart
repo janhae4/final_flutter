@@ -17,7 +17,22 @@ class EmailRepository {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
   }
+  Future<List<EmailResponseModel>> getSpam() async {
+  final token = await getToken();
+  final res = await http.get(
+    Uri.parse('$backendUrl/spam'),
+    headers: {'Authorization': 'Bearer $token'},
+    );
+  if (res.statusCode != 200) {
+    final errorMessage = jsonDecode(res.body)['message'] ?? 'Get spam emails failed';
+    throw Exception(errorMessage);
+    }
 
+  final json = jsonDecode(res.body);
+  return json
+      .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+      .toList();
+  }
   Future<void> connectSocket(Function(EmailResponseModel) onNewEmail) async {
     final token = await getToken();
     _socketService.initSocket(token!);

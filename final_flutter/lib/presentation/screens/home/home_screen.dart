@@ -39,6 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     'Sent',
     'Drafts',
     'Trash',
+    'Spam',
   ];
 
   List<LabelModel>? _labels;
@@ -426,6 +427,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   _buildDrawerItem(Icons.send_rounded, 'Sent', 2),
                   _buildDrawerItem(Icons.drafts_rounded, 'Drafts', 3),
                   _buildDrawerItem(Icons.delete_rounded, 'Trash', 4),
+                  _buildDrawerItem(Icons.report_gmailerrorred_rounded, 'Spam', 5),
                 ]),
                 const Divider(height: 1, color: AppColors.surfaceVariant),
                 _buildDrawerSection('LABELS', [
