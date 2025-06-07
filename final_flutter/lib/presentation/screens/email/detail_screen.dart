@@ -55,6 +55,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocConsumer<EmailBloc, EmailState>(
         listener: (context, state) {
           if (state is EmailDetailLoaded) {

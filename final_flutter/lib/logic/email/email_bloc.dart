@@ -9,15 +9,22 @@ import 'package:final_flutter/logic/notification/notification_event.dart';
 import 'package:final_flutter/service/notification_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:final_flutter/logic/settings/settings_bloc.dart';
+import 'package:final_flutter/logic/auth/auth_bloc.dart';
+import 'package:final_flutter/logic/auth/auth_state.dart';
 
 class EmailBloc extends Bloc<EmailEvent, EmailState> {
   final EmailRepository _emailRepository;
   final NotificationBloc _notificationBloc;
   final NotificationService _notificationService = NotificationService();
+  final SettingsBloc settingsBloc;
+  final AuthBloc authBloc;
 
   EmailBloc({
     required EmailRepository emailRepository,
     required NotificationBloc notificationBloc,
+    required this.settingsBloc,
+    required this.authBloc,
   }) : _emailRepository = emailRepository,
        _notificationBloc = notificationBloc,
        super(EmailInitial()) {
@@ -178,14 +185,10 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
       emailId: event.email.id,
     );
 
-    print('New email received: ${event.email}');
-
     _notificationBloc.add(
       AddNotification(
         NotificationItem(
-          id:
-              event.email.id ??
-              DateTime.now().millisecondsSinceEpoch.toString(),
+          id: event.email.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
           sender: event.email.sender ?? 'Unknown',
           subject: event.email.subject ?? 'No Subject',
           time: event.email.createdAt ?? DateTime.now(),
@@ -193,6 +196,33 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
         ),
       ),
     );
+
+    // AUTO ANSWER LOGIC
+    final settingsState = settingsBloc.state;
+    if (settingsState.autoAnswerEnabled && event.email.sender != null) {
+      // Lấy email người dùng hiện tại
+      String? myEmail;
+      final authState = authBloc.state;
+      if (authState is LoadProfileSuccess) {
+        myEmail = authState.user.email;
+      }
+      if (myEmail != null) {
+        final autoAnswerEmail = Email(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          sender: myEmail,
+          to: [event.email.sender!],
+          cc: [],
+          bcc: [],
+          subject: 'Re: ${event.email.subject ?? ''}',
+          content: [settingsState.autoAnswerContent],
+          plainTextContent: settingsState.autoAnswerContent,
+          time: DateTime.now(),
+          attachments: [],
+          labels: [],
+        );
+        await _emailRepository.sendEmail(autoAnswerEmail);
+      }
+    }
 
     if (currentState is EmailLoaded && currentState.currentTab == 0) {
       final updatedList = [event.email, ...currentState.emails];

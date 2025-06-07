@@ -55,7 +55,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: BlocConsumer<EmailBloc, EmailState>(
         listener: (context, state) {
           if (state is EmailError) {
@@ -100,17 +100,17 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                   style: TextStyle(
                     color:
                         isSelected
-                            ? AppColors.textOnPrimary
-                            : AppColors.textPrimary,
+                            ? Theme.of(context).colorScheme.onPrimary
+                            : Theme.of(context).colorScheme.primary,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                   ),
                 ),
                 selected: isSelected,
-                selectedColor: AppColors.primary,
-                backgroundColor: AppColors.surface,
-                checkmarkColor: AppColors.textOnPrimary,
+                selectedColor: Theme.of(context).colorScheme.primary,
+                backgroundColor: Theme.of(context).colorScheme.surface,
+                checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary : AppColors.border,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : AppColors.border,
                 ),
                 onSelected: (selected) {
                   setState(() => _selectedFilter = filter);
@@ -225,7 +225,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Card(
         elevation: email.isRead ? 1 : 3,
-        color: email.isRead ? AppColors.surface : AppColors.unreadBackground,
+        color: email.isRead ? Theme.of(context).colorScheme.surface : AppColors.unreadBackground,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () => _openEmail(email.id!),
@@ -253,14 +253,14 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                                             ? FontWeight.w500
                                             : FontWeight.w700,
                                     fontSize: 16,
-                                    color: AppColors.textPrimary,
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               Text(
                                 _formatTime(email.createdAt!),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textTertiary,
                                 ),
@@ -276,7 +276,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                                       ? FontWeight.w400
                                       : FontWeight.w600,
                               fontSize: 14,
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -289,7 +289,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                 const SizedBox(height: 8),
                 Text(
                   email.plainTextContent.toString().trim(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                     height: 1.3,
@@ -313,15 +313,15 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.attach_file,
                               size: 14,
                               color: AppColors.info,
                             ),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               '${email.attachments.length}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 color: AppColors.info,
                                 fontWeight: FontWeight.w500,
@@ -346,7 +346,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                     ),
                     const SizedBox(width: 8),
                     PopupMenuButton<String>(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.more_vert,
                         size: 20,
                         color: AppColors.textTertiary,
@@ -366,7 +366,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                                     size: 20,
                                     color: AppColors.textSecondary,
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: 12),
                                   Text(
                                     email.isRead
                                         ? 'Mark as unread'
@@ -375,7 +375,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                                 ],
                               ),
                             ),
-                            const PopupMenuItem(
+                            PopupMenuItem(
                               value: 'archive',
                               child: Row(
                                 children: [
@@ -400,7 +400,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                                         size: 20,
                                         color: AppColors.accent,
                                       ),
-                                      const SizedBox(width: 12),
+                                      SizedBox(width: 12),
                                       Text('Restore'),
                                     ],
                                   ),
@@ -434,8 +434,8 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   Widget _buildSenderAvatar(String sender) {
     final initial = sender.isNotEmpty ? sender[0].toUpperCase() : '?';
     final colors = [
-      AppColors.primary,
-      AppColors.secondary,
+      Theme.of(context).colorScheme.primary,
+      Theme.of(context).colorScheme.secondary,
       AppColors.accent,
       AppColors.info,
     ];
@@ -446,8 +446,8 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
       backgroundColor: color,
       child: Text(
         initial,
-        style: const TextStyle(
-          color: AppColors.textOnPrimary,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onPrimary,
           fontWeight: FontWeight.bold,
           fontSize: 16,
         ),
@@ -491,7 +491,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: AppColors.error),
+            Icon(Icons.error_outline, size: 64, color: Theme.of(context).colorScheme.error),
             const SizedBox(height: 16),
             Text(
               'Something went wrong',

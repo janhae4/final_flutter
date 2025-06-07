@@ -74,7 +74,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_appBarTitles[_currentIndex]),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text(
+          _appBarTitles[_currentIndex],
+          style: Theme.of(context).appBarTheme.titleTextStyle,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -276,6 +280,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           );
         },
       ),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     );
   }
 

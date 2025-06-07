@@ -48,7 +48,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final fontSize = state.fontSize;
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Settings'),
+            title: Text('Settings', style: Theme.of(context).appBarTheme.titleTextStyle),
             centerTitle: true,
             leading: const BackButton(),
           ),
@@ -56,32 +56,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               SwitchListTile(
-                title: Text('Enable Notifications', style: TextStyle(fontFamily: fontFamily, fontSize: fontSize)),
+                title: Text('Enable Notifications', style: Theme.of(context).textTheme.bodyLarge),
                 value: state.notificationsEnabled,
                 onChanged: (val) => context.read<SettingsBloc>().add(ToggleNotifications(val)),
               ),
               const SizedBox(height: 16),
               ListTile(
-                title: Text('Font Size', style: TextStyle(fontFamily: fontFamily, fontSize: fontSize)),
+                title: Text('Font Size', style: Theme.of(context).textTheme.bodyLarge),
                 trailing: DropdownButton<double>(
                   value: state.fontSize,
                   items: [14, 16, 18, 20]
                       .map((size) => DropdownMenuItem(
                             value: size.toDouble(),
-                            child: Text('$size', style: TextStyle(fontFamily: fontFamily, fontSize: fontSize)),
+                            child: Text('$size', style: Theme.of(context).textTheme.bodyLarge),
                           ))
                       .toList(),
                   onChanged: (val) => context.read<SettingsBloc>().add(ChangeFontSize(val!)),
                 ),
               ),
               ListTile(
-                title: Text('Font Family', style: TextStyle(fontFamily: fontFamily, fontSize: fontSize)),
+                title: Text('Font Family', style: Theme.of(context).textTheme.bodyLarge),
                 trailing: DropdownButton<String>(
                   value: state.fontFamily,
                   items: ['Roboto', 'Montserrat', 'NotoSans', 'Lato']
                       .map((font) => DropdownMenuItem(
                             value: font,
-                            child: Text(font, style: TextStyle(fontFamily: font, fontSize: fontSize)),
+                            child: Text(font, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontFamily: font)),
                           ))
                       .toList(),
                   onChanged: (val) => context.read<SettingsBloc>().add(ChangeFontFamily(val!)),
@@ -89,13 +89,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: Text('Dark Mode', style: TextStyle(fontFamily: fontFamily, fontSize: fontSize)),
+                title: Text('Dark Mode', style: Theme.of(context).textTheme.bodyLarge),
                 value: state.isDarkMode,
                 onChanged: (val) => context.read<SettingsBloc>().add(ToggleDarkMode(val)),
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: Text('Auto Answer Mode', style: TextStyle(fontFamily: fontFamily, fontSize: fontSize)),
+                title: Text('Auto Answer Mode', style: Theme.of(context).textTheme.bodyLarge),
                 value: state.autoAnswerEnabled,
                 onChanged: (val) => context.read<SettingsBloc>().add(ToggleAutoAnswer(val)),
               ),
@@ -107,19 +107,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       labelText: 'Auto Answer Content',
                       border: const OutlineInputBorder(),
                       filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+                      fillColor: Theme.of(context).colorScheme.surface,
                       labelStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontFamily: fontFamily,
-                        fontSize: fontSize,
                       ),
                     ),
                     minLines: 1,
                     maxLines: 3,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontFamily: fontFamily,
-                      fontSize: fontSize,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                     controller: _autoAnswerController,
                     onChanged: (val) {
                       if (val != state.autoAnswerContent) {

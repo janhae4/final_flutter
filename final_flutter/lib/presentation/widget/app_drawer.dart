@@ -7,26 +7,26 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: ListView(
-        children: const [
+        children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text('Email App', style: TextStyle(color: Colors.white)),
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+            child: Text('Email App', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Theme.of(context).colorScheme.onPrimary)),
           ),
           ListTile(
-            leading: Icon(Icons.inbox),
-            title: Text('Inbox'),
+            leading: Icon(Icons.inbox, color: Theme.of(context).iconTheme.color),
+            title: Text('Inbox', style: Theme.of(context).textTheme.bodyLarge),
           ),
           ListTile(
-            leading: Icon(Icons.send),
-            title: Text('Sent'),
+            leading: Icon(Icons.send, color: Theme.of(context).iconTheme.color),
+            title: Text('Sent', style: Theme.of(context).textTheme.bodyLarge),
           ),
           ListTile(
-            leading: Icon(Icons.delete),
-            title: Text('Trash'),
+            leading: Icon(Icons.delete, color: Theme.of(context).iconTheme.color),
+            title: Text('Trash', style: Theme.of(context).textTheme.bodyLarge),
           ),
           ListTile(
-            leading: Icon(Icons.settings),
-            title: Text('Settings'),
+            leading: Icon(Icons.settings, color: Theme.of(context).iconTheme.color),
+            title: Text('Settings', style: Theme.of(context).textTheme.bodyLarge),
           ),
         ],
       ),

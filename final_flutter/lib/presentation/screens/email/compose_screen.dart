@@ -268,13 +268,16 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
     final defaultFont = settings.fontFamily;
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.primary,
         title: Text(
           widget.replyTo != null
               ? 'Reply'
               : widget.forward != null
               ? 'Forward'
               : 'Compose',
+          style: Theme.of(context).appBarTheme.titleTextStyle,
         ),
         actions: [
           // Draft indicator

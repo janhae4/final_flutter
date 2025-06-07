@@ -42,14 +42,15 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>(create: (_) => AuthBloc(authRepository)),
         BlocProvider<NotificationBloc>.value(value: notificationBloc),
-        BlocProvider<EmailBloc>(
-          create:
-              (_) => EmailBloc(
-                emailRepository: emailRepository,
-                notificationBloc: notificationBloc,
-              ),
-        ),
         BlocProvider<SettingsBloc>(create: (_) => SettingsBloc()),
+        BlocProvider<EmailBloc>(
+          create: (context) => EmailBloc(
+            emailRepository: emailRepository,
+            notificationBloc: notificationBloc,
+            settingsBloc: context.read<SettingsBloc>(),
+            authBloc: context.read<AuthBloc>(),
+          ),
+        ),
       ],
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, state) {
