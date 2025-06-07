@@ -136,11 +136,37 @@ exports.searchEmails = async (req, res) => {
         if (req.query.query) {
             email = await EmailService.searchEmails(req.user.id, req.query.query);
         }
-        else
-        {
+        else {
             email = await EmailService.advancedSearch(req.user.id, req);
         }
         res.json(email);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.addLabel = async (req, res) => {
+    try {
+        const email = await EmailService.addLabelToEmail(req.params.id, req.body);
+        res.json(email);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.deleteLabel = async (req, res) => {
+    try {
+        const email = await EmailService.removeLabelFromEmail(req.params.id, req.params.labelId);
+        res.json(email);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getEmailsByLabel = async (req, res) => {
+    try {
+        const emails = await EmailService.getEmailsByLabel(req.user.id, req.params.labelId);
+        res.json(emails);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

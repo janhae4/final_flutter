@@ -1,35 +1,31 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:final_flutter/config/app_theme.dart';
+import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_attachment_model.dart';
-import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
+import 'package:final_flutter/logic/email/email_state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'dart:async';
-import 'dart:io';
-
-// Assuming you have these imports for your BLoC
-// import 'package:final_flutter/bloc/email_bloc.dart';
-// import 'package:final_flutter/bloc/email_event.dart';
-// import 'package:final_flutter/bloc/email_state.dart';
-import 'package:final_flutter/data/models/email.dart';
 import 'package:flutter_quill/quill_delta.dart';
 
 class ComposeEmailScreen extends StatefulWidget {
-  final UserModel? user;
-  final Email? replyTo;
-  final Email? forward;
+  final dynamic user;
+  final dynamic replyTo;
+  final dynamic forward;
+  final dynamic emailId;
 
   const ComposeEmailScreen({
     super.key,
     required this.user,
     this.replyTo,
     this.forward,
+    this.emailId,
   });
 
   @override
@@ -39,155 +35,129 @@ class ComposeEmailScreen extends StatefulWidget {
 class _ComposeEmailScreenState extends State<ComposeEmailScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+  final _scrollController = ScrollController();
 
-  // Text Controllers
+  // Controllers
   final _toController = TextEditingController();
   final _ccController = TextEditingController();
   final _bccController = TextEditingController();
   final _subjectController = TextEditingController();
-
-  // WYSIWYG Editor
   late QuillController _contentController;
 
-  // State variables
+  // State
   bool _showCc = false;
   bool _showBcc = false;
   bool _isDraft = false;
+  bool _isExpanded = false;
   Timer? _autoSaveTimer;
   final List<PlatformFile> _attachments = [];
 
-  // Animation
-  late AnimationController _animationController;
+  // Animations
+  late AnimationController _slideController;
+  late AnimationController _fadeController;
+  late AnimationController _bounceController;
+  late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
+  Email? _email;
 
   @override
   void initState() {
     super.initState();
-
-    _contentController = QuillController.basic();
-
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
-    );
-
-    _initializeFields();
-
-    _startAutoSave();
-
-    _animationController.forward();
+    _initializeAnimations();
+    if (widget.emailId != null) {
+      context.read<EmailBloc>().add(LoadEmailDetail(widget.emailId));
+    }
+    _initializeEditor();
+    _playEntranceAnimation();
   }
 
-  void _initializeFields() {
+  void _initializeAnimations() {
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _bounceController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _slideController, curve: Curves.elasticOut),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _bounceController, curve: Curves.bounceOut),
+    );
+  }
+
+  void _playEntranceAnimation() {
+    _fadeController.forward();
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _slideController.forward();
+    });
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _bounceController.forward();
+    });
+  }
+
+  void _initializeEditor() {
     if (widget.replyTo != null) {
       _toController.text = widget.replyTo!.sender;
       _subjectController.text =
           widget.replyTo!.subject.startsWith('Re:')
               ? widget.replyTo!.subject
               : 'Re: ${widget.replyTo!.subject}';
-
-      // Quote header
-      final quoteHeader =
-          '\n\n--- Original Message ---\n'
-          'From: ${widget.replyTo!.sender}\n'
-          'Subject: ${widget.replyTo!.subject}\n'
-          'Date: ${widget.replyTo!.time}\n\n';
-
-      final Delta originalDelta = Delta.fromJson(widget.replyTo!.content);
-      final Delta fullDelta = Delta()..insert(quoteHeader);
-      for (final op in originalDelta.toList()) {
-        fullDelta.push(op);
-      }
-      _contentController = QuillController(
-        document: Document.fromDelta(fullDelta),
-        selection: const TextSelection.collapsed(offset: 0),
-      );
     } else if (widget.forward != null) {
       _subjectController.text =
           widget.forward!.subject.startsWith('Fwd:')
               ? widget.forward!.subject
               : 'Fwd: ${widget.forward!.subject}';
-
-      final quoteHeader =
-          '\n\n--- Forwarded Message ---\n'
-          'From: ${widget.forward!.sender}\n'
-          'To: ${widget.forward!.to.join(', ')}\n'
-          'Subject: ${widget.forward!.subject}\n'
-          'Date: ${widget.forward!.time}\n\n';
-
-      final Delta forwardDelta = Delta.fromJson(widget.forward!.content);
-      final Delta fullDelta = Delta()..insert(quoteHeader);
-      for (final op in forwardDelta.toList()) {
-        fullDelta.push(op);
-      }
-      _contentController = QuillController(
-        document: Document.fromDelta(fullDelta),
-        selection: const TextSelection.collapsed(offset: 0),
-      );
-    } else {
-      _contentController = QuillController.basic();
     }
+    _contentController = QuillController.basic();
   }
 
-  void _startAutoSave() {
-    _autoSaveTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _saveAsDraft();
-    });
-  }
-
-  void _saveAsDraft() {
-    if (_toController.text.isNotEmpty ||
-        _subjectController.text.isNotEmpty ||
-        _contentController.document.toPlainText().trim().isNotEmpty) {
-      final email = Email(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        sender: widget.user!.email!,
-        to: _parseEmails(_toController.text),
-        cc: _parseEmails(_ccController.text),
-        bcc: _parseEmails(_bccController.text),
-        subject: _subjectController.text,
-        content: _contentController.document.toDelta().toJson(),
-        plainTextContent: _contentController.document.toPlainText(),
-        time: DateTime.now(),
-        isDraft: true,
-        attachments:
-            _attachments.map((file) {
-              return EmailAttachment(
-                name: file.name,
-                path: kIsWeb ? null : file.path,
-                bytes: kIsWeb ? base64Encode(file.bytes!): null,
-              );
-            }).toList(),
-      );
-
-      // Dispatch save draft event to BLoC
-      // context.read<EmailBloc>().add(SaveDraftEvent(email));
-
-      setState(() {
-        _isDraft = true;
-      });
-
-      // Show subtle feedback
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Draft saved'),
-          duration: const Duration(seconds: 1),
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.only(bottom: 100, left: 16, right: 16),
+  void _showFloatingMessage(String message, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha((255 * 0.2).toInt()),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.check_circle, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
         ),
-      );
-    }
-  }
-
-  List<String> _parseEmails(String text) {
-    return text
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toList();
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   Future<void> _pickAttachments() async {
@@ -201,21 +171,17 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         setState(() {
           _attachments.addAll(result.files);
         });
+        _showFloatingMessage(
+          '📎 ${result.files.length} files attached',
+          Colors.blue.shade600,
+        );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error picking files: $e')));
+      _showFloatingMessage('❌ Error selecting files', Colors.red.shade600);
     }
   }
 
-  void _removeAttachment(int index) {
-    setState(() {
-      _attachments.removeAt(index);
-    });
-  }
-
-  void _sendEmail() {
+  void _sendEmail(bool isDraft) {
     if (_formKey.currentState!.validate()) {
       if (_toController.text.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -242,292 +208,506 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                 bytes: kIsWeb ? base64Encode(file.bytes!) : null,
               );
             }).toList(),
+        attachmentCount: _attachments.length,
+        isReplied: widget.replyTo != null ? true : false,
+        isForwarded: widget.forward != null ? true : false,
+        originalEmailId: widget.replyTo?.id ?? widget.forward?.id ?? '',
+        isDraft: _isDraft,
       );
-
-      print('''
-      To: ${email.to}
-      CC: ${email.cc}
-      BCC: ${email.bcc}
-      Subject: ${email.subject}
-      Content: ${_contentController.document.toDelta().toJson()}
-      ''');
-
-      // Dispatch send email event to BLoC
       context.read<EmailBloc>().add(SendEmail(email));
 
-      // Show confirmation
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Email sent successfully!')));
-
-      Navigator.of(context).pop();
+      if (isDraft) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Draft saved successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Email sent successfully!')),
+        );
+        Navigator.of(context).pop();
+      }
     }
   }
 
-  @override
-  void dispose() {
-    _autoSaveTimer?.cancel();
-    _toController.dispose();
-    _ccController.dispose();
-    _bccController.dispose();
-    _subjectController.dispose();
-    _contentController.dispose();
-    _animationController.dispose();
-    super.dispose();
+  List<String> _parseEmails(String text) {
+    return text
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.replyTo != null
-              ? 'Reply'
-              : widget.forward != null
-              ? 'Forward'
-              : 'Compose',
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: Theme.of(context).colorScheme.copyWith(
+          primary: AppColors.primaryDark,
+          secondary: AppColors.primaryLight,
         ),
-        actions: [
-          // Draft indicator
-          if (_isDraft)
-            Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withAlpha((255 * 0.2).toInt()),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Draft',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.secondary,
-                  fontWeight: FontWeight.w600,
+      ),
+      child: BlocConsumer<EmailBloc, EmailState>(
+        listener: (context, state) {
+          if (state is EmailDetailLoaded) {
+            setState(() {
+              _email = state.emailThread.email;
+              _toController.text = _email!.to.join(', ');
+              _ccController.text = _email!.cc.join(', ');
+              _bccController.text = _email!.bcc.join(', ');
+              _subjectController.text = _email!.subject;
+              _contentController = QuillController(
+                document: Document.fromJson(_email!.content),
+                selection: const TextSelection.collapsed(offset: 0),
+              );
+            });
+          }
+        },
+        builder:
+            (context, state) => Scaffold(
+              backgroundColor: const Color(0xFFF8FAFC),
+              extendBodyBehindAppBar: true,
+              appBar: _buildModernAppBar(),
+              body: FadeTransition(
+                opacity: _fadeAnimation,
+                child: SlideTransition(
+                  position: _slideAnimation,
+                  child: ScaleTransition(
+                    scale: _scaleAnimation,
+                    child: _buildBody(),
+                  ),
                 ),
               ),
+              floatingActionButton: _buildFloatingActionButton(),
             ),
+      ),
+    );
+  }
 
-          // Attachment button
-          IconButton(
-            icon: const Icon(Icons.attach_file),
-            onPressed: _pickAttachments,
-            tooltip: 'Add attachments',
+  PreferredSizeWidget _buildModernAppBar() {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primary.withAlpha((255 * 0.8).toInt()),
+              AppColors.primaryLight.withAlpha((255 * 0.8).toInt()),
+            ],
           ),
-          // Send button
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(24),
+            bottomRight: Radius.circular(24),
+          ),
+        ),
+      ),
+      title: Row(
+        children: [
           Container(
-            margin: const EdgeInsets.only(right: 8),
-            child: ElevatedButton.icon(
-              onPressed: _sendEmail,
-              icon: const Icon(Icons.send, size: 18, color: AppColors.surface),
-              label: const Text('Send'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-              ),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha((255 * 0.2).toInt()),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              widget.replyTo != null
+                  ? Icons.reply
+                  : widget.forward != null
+                  ? Icons.forward
+                  : Icons.edit,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            widget.replyTo != null
+                ? 'Reply'
+                : widget.forward != null
+                ? 'Forward'
+                : 'Compose',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
           ),
         ],
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // Recipients Section
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  border: Border(
-                    bottom: BorderSide(color: theme.dividerColor, width: 0.5),
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha((255 * 0.2).toInt()),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.save, color: Colors.white, size: 20),
+          ),
+          onPressed: () {
+            setState(() {
+              _isDraft = true;
+              _sendEmail(true);
+            });
+          },
+        ),
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha((255 * 0.2).toInt()),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.attach_file, color: Colors.white, size: 20),
+          ),
+          onPressed: _pickAttachments,
+        ),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return Container(
+      margin: const EdgeInsets.only(top: 100),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildRecipientsCard(),
+            if (_attachments.isNotEmpty) _buildAttachmentsCard(),
+            Expanded(child: _buildEditorCard()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecipientsCard() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((255 * 0.05).toInt()),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            _buildModernTextField(
+              controller: _toController,
+              label: 'To',
+              icon: Icons.person,
+              isRequired: true,
+            ),
+
+            // CC/BCC Toggle Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  _buildToggleButton(
+                    'Cc',
+                    _showCc,
+                    () => setState(() => _showCc = !_showCc),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    // To field
-                    _buildRecipientField(
-                      controller: _toController,
-                      label: 'To',
-                      hint: 'Enter email addresses',
-                      isRequired: true,
-                    ),
+                  const SizedBox(width: 12),
+                  _buildToggleButton(
+                    'Bcc',
+                    _showBcc,
+                    () => setState(() => _showBcc = !_showBcc),
+                  ),
+                ],
+              ),
+            ),
 
-                    // CC/BCC toggle buttons
-                    Row(
-                      children: [
-                        TextButton(
-                          onPressed: () => setState(() => _showCc = !_showCc),
-                          child: Text(_showCc ? 'Hide Cc' : 'Add Cc'),
-                        ),
-                        TextButton(
-                          onPressed: () => setState(() => _showBcc = !_showBcc),
-                          child: Text(_showBcc ? 'Hide Bcc' : 'Add Bcc'),
-                        ),
-                      ],
-                    ),
-
-                    // CC field
-                    if (_showCc)
-                      _buildRecipientField(
-                        controller: _ccController,
-                        label: 'Cc',
-                        hint: 'Enter email addresses',
-                      ),
-
-                    // BCC field
-                    if (_showBcc)
-                      _buildRecipientField(
-                        controller: _bccController,
-                        label: 'Bcc',
-                        hint: 'Enter email addresses',
-                      ),
-
-                    // Subject field
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _subjectController,
-                      decoration: const InputDecoration(
-                        labelText: 'Subject',
-                        hintText: 'Enter subject',
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a subject';
-                        }
-                        return null;
-                      },
-                    ),
-                  ],
-                ),
+            if (_showCc)
+              _buildModernTextField(
+                controller: _ccController,
+                label: 'Cc',
+                icon: Icons.people,
               ),
 
-              // Attachments
-              if (_attachments.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    border: Border(
-                      bottom: BorderSide(color: theme.dividerColor, width: 0.5),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Attachments (${_attachments.length})',
-                        style: theme.textTheme.titleSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children:
-                            _attachments.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final file = entry.value;
-                              return Chip(
-                                avatar: Icon(
-                                  _getFileIcon(file.extension ?? ''),
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  file.name,
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                                deleteIcon: const Icon(Icons.close, size: 18),
-                                onDeleted: () => _removeAttachment(index),
-                              );
-                            }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Content Editor
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      // Toolbar
-                      QuillToolbar.simple(
-                        configurations: QuillSimpleToolbarConfigurations(
-                          controller: _contentController,
-                          sharedConfigurations: const QuillSharedConfigurations(
-                            locale: Locale('en'),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Editor
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(color: theme.dividerColor),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: QuillEditor.basic(
-                            configurations: QuillEditorConfigurations(
-                              controller: _contentController,
-                              // r: false,
-                              sharedConfigurations:
-                                  const QuillSharedConfigurations(
-                                    locale: Locale('en'),
-                                  ),
-                              placeholder: 'Write your message...',
-                              padding: const EdgeInsets.all(16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+            if (_showBcc)
+              _buildModernTextField(
+                controller: _bccController,
+                label: 'Bcc',
+                icon: Icons.people_outline,
               ),
-            ],
+
+            _buildModernTextField(
+              controller: _subjectController,
+              label: 'Subject',
+              icon: Icons.subject,
+              isRequired: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleButton(String text, bool isActive, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primaryDark : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isActive ? AppColors.primaryDark : Colors.grey.shade300,
+          ),
+        ),
+        child: Text(
+          isActive ? 'Hide $text' : 'Add $text',
+          style: TextStyle(
+            color: isActive ? Colors.white : Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+            fontSize: 14,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildRecipientField({
+  Widget _buildModernTextField({
     required TextEditingController controller,
     required String label,
-    required String hint,
+    required IconData icon,
     bool isRequired = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(
         controller: controller,
-        decoration: InputDecoration(labelText: label, hintText: hint),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryDark.withAlpha((255 * 0.1).toInt()),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: AppColors.primaryDark, size: 20),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.grey.shade300),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: Color(0xFF6366F1), width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.grey.shade50,
+        ),
         validator:
             isRequired
                 ? (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter at least one recipient';
-                  }
-                  // Basic email validation
-                  final emails = _parseEmails(value);
-                  for (final email in emails) {
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(email)) {
-                      return 'Please enter valid email addresses';
-                    }
+                    return 'This field is required';
                   }
                   return null;
                 }
                 : null,
-        keyboardType: TextInputType.emailAddress,
+      ),
+    );
+  }
+
+  Widget _buildAttachmentsCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((255 * 0.05).toInt()),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withAlpha((255 * 0.1).toInt()),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.attach_file,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Attachments (${_attachments.length})',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  _attachments.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final file = entry.value;
+                    return _buildAttachmentChip(file, index);
+                  }).toList(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentChip(PlatformFile file, int index) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.blue.withAlpha((255 * 0.1).toInt()),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.blue.withAlpha((255 * 0.3).toInt())),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            _getFileIcon(file.extension ?? ''),
+            color: Colors.blue,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 120),
+            child: Text(
+              file.name,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => setState(() => _attachments.removeAt(index)),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.red.withAlpha((255 * 0.1).toInt()),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.close, color: Colors.red, size: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEditorCard() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha((255 * 0.05).toInt()),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Toolbar
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: QuillToolbar.simple(
+              configurations: QuillSimpleToolbarConfigurations(
+                controller: _contentController,
+                sharedConfigurations: const QuillSharedConfigurations(
+                  locale: Locale('en'),
+                ),
+              ),
+            ),
+          ),
+
+          // Editor
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: QuillEditor.basic(
+                configurations: QuillEditorConfigurations(
+                  controller: _contentController,
+                  sharedConfigurations: const QuillSharedConfigurations(
+                    locale: Locale('en'),
+                  ),
+                  placeholder: '✍️ Write your message here...',
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppColors.primaryDark, AppColors.primaryLight],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryDark.withAlpha((255 * 0.2).toInt()),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        onPressed: () => _sendEmail(false),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        icon: const Icon(Icons.send, color: Colors.white),
+        label: const Text(
+          'Send Email',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
@@ -554,5 +734,20 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
       default:
         return Icons.attach_file;
     }
+  }
+
+  @override
+  void dispose() {
+    _autoSaveTimer?.cancel();
+    _slideController.dispose();
+    _fadeController.dispose();
+    _bounceController.dispose();
+    _scrollController.dispose();
+    _toController.dispose();
+    _ccController.dispose();
+    _bccController.dispose();
+    _subjectController.dispose();
+    _contentController.dispose();
+    super.dispose();
   }
 }

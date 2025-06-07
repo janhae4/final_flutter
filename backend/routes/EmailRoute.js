@@ -19,5 +19,8 @@ router.post('/:id/read', EmailController.markRead);
 router.post('/:id/trash', EmailController.moveToTrash);
 router.post('/:id/restore', EmailController.restoreFromTrash);
 router.delete('/:id', EmailController.deleteEmail);
+router.post('/:id/labels', EmailController.addLabel);
+router.delete('/:id/labels/:labelId', EmailController.deleteLabel);
+router.get('/labels/:labelId', EmailController.getEmailsByLabel);
 
 module.exports = router;

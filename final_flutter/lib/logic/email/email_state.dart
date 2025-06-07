@@ -1,5 +1,6 @@
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/data/models/email_thread.dart';
 abstract class EmailState {}
 
 class EmailInitial extends EmailState {}
@@ -35,8 +36,8 @@ class EmailLoaded extends EmailState {
 }
 
 class EmailDetailLoaded extends EmailState {
-  final Email email;
-  EmailDetailLoaded({required this.email});
+  final EmailThread emailThread;
+  EmailDetailLoaded(this.emailThread);
 }
 
 class EmailError extends EmailState {

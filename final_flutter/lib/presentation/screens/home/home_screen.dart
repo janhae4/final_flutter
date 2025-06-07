@@ -85,211 +85,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_appBarTitles[_currentIndex]),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () => _showSearchDialog(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _refreshEmails(context),
-          ),
-          BlocBuilder<NotificationBloc, NotificationState>(
-            builder: (context, state) {
-              return badges.Badge(
-                showBadge: state.unreadCount > 0,
-                badgeContent: Text(
-                  '${state.unreadCount}',
-                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.notifications),
-                  onPressed: () {
-                    context.read<NotificationBloc>().add(MarkAllAsRead());
-                    _showNotificationList(context);
-                  },
-                ),
-              );
-            },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              if (value == 'logout') {
-                _logout(context);
-              } else if (value == 'settings') {
-                _navigateToSettings(context);
-              } else {
-                _navigateToProfile(context);
-              }
-            },
-            itemBuilder: (BuildContext context) {
-              return {'Profile', 'Settings', 'Logout'}.map((String choice) {
-                return PopupMenuItem<String>(
-                  value: choice.toLowerCase(),
-                  child: Text(choice),
-                );
-              }).toList();
-            },
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToCompose(context),
-        child: const Icon(Icons.edit),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() => _currentIndex = index);
-          context.read<EmailBloc>().add(ChangeTab(index));
-        },
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Starred'),
-          BottomNavigationBarItem(icon: Icon(Icons.send), label: 'Sent'),
-          BottomNavigationBarItem(icon: Icon(Icons.drafts), label: 'Drafts'),
-          BottomNavigationBarItem(icon: Icon(Icons.delete), label: 'Trash'),
-        ],
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(color: AppColors.primary),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundImage: NetworkImage(
-                      'http://localhost:3000/${_user?.avatarUrl}',
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _user?.name ?? '',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                  Text(
-                    _user?.email ?? '',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.inbox),
-              title: const Text('Inbox'),
-              selected: _currentIndex == 0,
-              onTap: () {
-                setState(() => _currentIndex = 0);
-                context.read<EmailBloc>().add(ChangeTab(0));
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.star),
-              title: const Text('Starred'),
-              selected: _currentIndex == 1,
-              onTap: () {
-                setState(() => _currentIndex = 1);
-                context.read<EmailBloc>().add(ChangeTab(1));
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.send),
-              title: const Text('Sent'),
-              selected: _currentIndex == 2,
-              onTap: () {
-                setState(() => _currentIndex = 2);
-                context.read<EmailBloc>().add(ChangeTab(2));
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.drafts),
-              title: const Text('Drafts'),
-              selected: _currentIndex == 3,
-              onTap: () {
-                setState(() => _currentIndex = 3);
-                context.read<EmailBloc>().add(ChangeTab(3));
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete),
-              title: const Text('Trash'),
-              selected: _currentIndex == 4,
-              onTap: () {
-                setState(() => _currentIndex = 4);
-                context.read<EmailBloc>().add(ChangeTab(4));
-                Navigator.pop(context);
-              },
-            ),
-            const Divider(),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Text('Labels'),
-            ),
-            if (_labels != null)
-              ..._labels!.map((label) {
-                return ListTile(
-                  leading: const Icon(Icons.label),
-                  onTap: () {},
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            context.read<EmailBloc>().add(
-                              FilterByLabel(label.label),
-                            );
-                            Navigator.pop(context);
-                          },
-                          child: Text(label.label),
-                        ),
-                      ),
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _editLabel(context, label);
-                          } else if (value == 'delete') {
-                            _deleteLabel(context, label.id);
-                          }
-                        },
-                        itemBuilder:
-                            (context) => const [
-                              PopupMenuItem(value: 'edit', child: Text('Edit')),
-                              PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Delete'),
-                              ),
-                            ],
-                      ),
-                    ],
-                  ),
-                );
-              })
-            else
-              Container(),
-
-            ListTile(
-              leading: const Icon(Icons.add),
-              title: const Text('Create new label'),
-              onTap: () {
-                print('Create new label tapped');
-                _createNewLabel(context);
-              },
-            ),
-          ],
-        ),
-      ),
+      backgroundColor: AppColors.surface,
+      appBar: _buildAppBar(context),
+      floatingActionButton: _buildFAB(context),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: _buildBottomNav(context),
+      drawer: _buildDrawer(context),
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is LoadProfileSuccess) {
@@ -306,28 +107,580 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           if (state is LoadLabelsSuccess) {
             setState(() {
               _user = _user?.copyWith(labels: state.labels);
+              _labels = state.labels;
             });
           }
         },
         builder: (context, state) {
           if (_user == null) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildLoadingState();
           }
           return BlocListener<EmailBloc, EmailState>(
             listener: (context, emailState) {
               if (emailState is EmailError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: ${emailState.message}')),
-                );
+                _showSnackBar(context, emailState.message, isError: true);
               }
             },
-            child: InboxScreen(
-              key: Key('inbox-screen-$_currentIndex'),
-              user: _user!,
-              tabIndex: _currentIndex,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.1, 0),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeInOut,
+                      ),
+                    ),
+                    child: child,
+                  ),
+                );
+              },
+              child: InboxScreen(
+                key: Key('inbox-screen-$_currentIndex'),
+                user: _user!,
+                tabIndex: _currentIndex,
+                labels: _labels ?? [],
+              ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return AppBar(
+      elevation: 0,
+      scrolledUnderElevation: 2,
+      backgroundColor: AppColors.surface,
+      foregroundColor: AppColors.textPrimary,
+      surfaceTintColor: AppColors.surfaceVariant,
+      title: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: Text(
+          _appBarTitles[_currentIndex],
+          key: ValueKey(_currentIndex),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ),
+      actions: [
+        _buildAppBarAction(
+          icon: Icons.search_rounded,
+          onPressed: () => _showSearchDialog(context),
+          tooltip: 'Search emails',
+        ),
+        _buildAppBarAction(
+          icon: Icons.refresh_rounded,
+          onPressed: () => _refreshEmails(context),
+          tooltip: 'Refresh',
+        ),
+        _buildNotificationButton(context),
+        _buildPopupMenu(context),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildAppBarAction({
+    required IconData icon,
+    required VoidCallback onPressed,
+    required String tooltip,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      child: IconButton.filled(
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppColors.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        icon: Icon(icon, size: 22),
+        onPressed: onPressed,
+        tooltip: tooltip,
+      ),
+    );
+  }
+
+  Widget _buildNotificationButton(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      child: BlocBuilder<NotificationBloc, NotificationState>(
+        builder: (context, state) {
+          return badges.Badge(
+            showBadge: state.unreadCount > 0,
+            badgeContent: Text(
+              '${state.unreadCount}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            badgeStyle: badges.BadgeStyle(
+              badgeColor: AppColors.error,
+              elevation: 0,
+              padding: const EdgeInsets.all(6),
+            ),
+            badgeAnimation: const badges.BadgeAnimation.slide(
+              animationDuration: Duration(milliseconds: 300),
+            ),
+            child: IconButton.filled(
+              style: IconButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: AppColors.textPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.notifications_rounded, size: 22),
+              onPressed: () {
+                context.read<NotificationBloc>().add(MarkAllAsRead());
+                _showNotificationList(context);
+              },
+              tooltip: 'Notifications',
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildPopupMenu(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      child: PopupMenuButton<String>(
+        style: IconButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: AppColors.textPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        icon: const Icon(Icons.more_vert_rounded, size: 22),
+        tooltip: 'More options',
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 8,
+        shadowColor: Theme.of(
+          context,
+        ).shadowColor.withAlpha((255 * 0.2).toInt()),
+        offset: const Offset(0, 8),
+        onSelected: (value) {
+          switch (value) {
+            case 'profile':
+              _navigateToProfile(context);
+              break;
+            case 'settings':
+              _navigateToSettings(context);
+              break;
+            case 'logout':
+              _logout(context);
+              break;
+          }
+        },
+        itemBuilder: (BuildContext context) {
+          return [
+            _buildPopupMenuItem(Icons.person_rounded, 'Profile', 'profile'),
+            _buildPopupMenuItem(Icons.settings_rounded, 'Settings', 'settings'),
+            const PopupMenuDivider(),
+            _buildPopupMenuItem(
+              Icons.logout_rounded,
+              'Logout',
+              'logout',
+              isDestructive: true,
+            ),
+          ];
+        },
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupMenuItem(
+    IconData icon,
+    String title,
+    String value, {
+    bool isDestructive = false,
+  }) {
+    return PopupMenuItem<String>(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: isDestructive ? AppColors.error : null),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              color: isDestructive ? AppColors.error : null,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFAB(BuildContext context) {
+    return FloatingActionButton.extended(
+      onPressed: () => _navigateToCompose(context),
+      backgroundColor: AppColors.primary,
+      foregroundColor: AppColors.surface,
+      elevation: 8,
+      extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      icon: const Icon(Icons.edit_rounded, size: 20),
+      label: const Text(
+        'Compose',
+        style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withAlpha((255 * 0.1).toInt()),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: NavigationBar(
+        selectedIndex: _currentIndex,
+        onDestinationSelected: (index) {
+          setState(() => _currentIndex = index);
+          context.read<EmailBloc>().add(ChangeTab(index));
+        },
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: AppColors.primary,
+        indicatorColor: AppColors.primary.withAlpha((255 * 0.1).toInt()),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+        destinations: [
+          _buildNavDestination(
+            Icons.inbox_rounded,
+            Icons.inbox_outlined,
+            'Inbox',
+          ),
+          _buildNavDestination(
+            Icons.star_rounded,
+            Icons.star_outline_rounded,
+            'Starred',
+          ),
+          _buildNavDestination(Icons.send_rounded, Icons.send_outlined, 'Sent'),
+          _buildNavDestination(
+            Icons.drafts_rounded,
+            Icons.drafts_outlined,
+            'Drafts',
+          ),
+          _buildNavDestination(
+            Icons.delete_rounded,
+            Icons.delete_outline_rounded,
+            'Trash',
+          ),
+        ],
+      ),
+    );
+  }
+
+  NavigationDestination _buildNavDestination(
+    IconData selectedIcon,
+    IconData unselectedIcon,
+    String label,
+  ) {
+    return NavigationDestination(
+      selectedIcon: Icon(selectedIcon, size: 24),
+      icon: Icon(unselectedIcon, size: 24),
+      label: label,
+    );
+  }
+
+  Widget _buildDrawer(BuildContext context) {
+    return Drawer(
+      backgroundColor: AppColors.surface,
+      elevation: 16,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          _buildDrawerHeader(context),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              children: [
+                _buildDrawerSection('FOLDERS', [
+                  _buildDrawerItem(Icons.inbox_rounded, 'Inbox', 0),
+                  _buildDrawerItem(Icons.star_rounded, 'Starred', 1),
+                  _buildDrawerItem(Icons.send_rounded, 'Sent', 2),
+                  _buildDrawerItem(Icons.drafts_rounded, 'Drafts', 3),
+                  _buildDrawerItem(Icons.delete_rounded, 'Trash', 4),
+                ]),
+                const Divider(height: 1, color: AppColors.surfaceVariant),
+                _buildDrawerSection('LABELS', [
+                  if (_labels != null)
+                    ..._labels!.map((label) => _buildLabelItem(context, label)),
+                  _buildCreateLabelItem(context),
+                ]),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
+      constraints: const BoxConstraints(
+        minHeight: 150,
+        minWidth: double.infinity,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.primary,
+            AppColors.primaryDark.withAlpha((255 * 0.8).toInt()),
+          ],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundImage: NetworkImage(
+              'http://localhost:3000/${_user?.avatarUrl}',
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            _user?.name ?? '',
+            style: TextStyle(color: Colors.white, fontSize: 18),
+          ),
+          Text(_user?.email ?? '', style: const TextStyle(color: Colors.white)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerSection(String title, List<Widget> children) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.surface.withAlpha((255 * 0.6).toInt()),
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        ...children,
+      ],
+    );
+  }
+
+  Widget _buildDrawerItem(IconData icon, String title, int index) {
+    final isSelected = _currentIndex == index;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        selected: isSelected,
+        selectedTileColor: Theme.of(
+          context,
+        ).colorScheme.primary.withAlpha((255 * 0.08).toInt()),
+        selectedColor: AppColors.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Icon(icon, size: 22),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          ),
+        ),
+        onTap: () {
+          setState(() => _currentIndex = index);
+          context.read<EmailBloc>().add(ChangeTab(index));
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  Widget _buildLabelItem(BuildContext context, label) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            shape: BoxShape.circle,
+          ),
+        ),
+        title: Text(
+          label.label,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        trailing: PopupMenuButton<String>(
+          icon: Icon(
+            Icons.more_horiz_rounded,
+            size: 18,
+            color: AppColors.surface.withAlpha((255 * 0.6).toInt()),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) {
+            if (value == 'edit') {
+              _editLabel(context, label);
+            } else if (value == 'delete') {
+              _deleteLabel(context, label.id);
+            }
+          },
+          itemBuilder:
+              (context) => [
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Row(
+                    children: const [
+                      Icon(Icons.edit_rounded, size: 18),
+                      SizedBox(width: 12),
+                      Text('Edit'),
+                    ],
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.delete_rounded,
+                        size: 18,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(width: 12),
+                      Text('Delete', style: TextStyle(color: AppColors.error)),
+                    ],
+                  ),
+                ),
+              ],
+        ),
+        onTap: () {
+          context.read<EmailBloc>().add(FilterByLabel(label.id));
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  Widget _buildCreateLabelItem(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withAlpha((255 * 0.1).toInt()),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.add_rounded, size: 18, color: AppColors.primary),
+        ),
+        title: Text(
+          'Create new label',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            color: AppColors.primary,
+          ),
+        ),
+        onTap: () => _createNewLabel(context),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withAlpha((255 * 0.1).toInt()),
+              shape: BoxShape.circle,
+            ),
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Loading your emails...',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: AppColors.surface.withAlpha((255 * 0.7).toInt()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSnackBar(
+    BuildContext context,
+    String message, {
+    bool isError = false,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_rounded : Icons.check_circle_rounded,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError ? AppColors.error : AppColors.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+        elevation: 8,
+        duration: const Duration(seconds: 4),
       ),
     );
   }
@@ -771,7 +1124,7 @@ void _editLabel(BuildContext context, LabelModel label) async {
 }
 
 void _deleteLabel(BuildContext context, String labelId) {
-  context.read<AuthBloc>().add(DeleteLabel(labelId));
+  context.read<AuthBloc>().add(RemoveLabel(labelId));
 }
 
 void _createNewLabel(BuildContext context) {

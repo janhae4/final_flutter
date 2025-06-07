@@ -179,7 +179,7 @@ exports.deleteLabel = async (req, res) => {
         if (!label) {
             return res.status(404).json({ message: 'Label not found' });
         }
-        res.json({ message: 'Label deleted successfully' });
+        res.json(label);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

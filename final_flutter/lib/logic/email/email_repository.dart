@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/data/models/email_thread.dart';
+import 'package:final_flutter/data/models/label_model.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/service/socket_service.dart';
 import 'package:http/http.dart' as http;
@@ -40,7 +42,7 @@ class EmailRepository {
         .toList();
   }
 
-  Future<Email> getEmailDetail(String id) async {
+  Future<EmailThread> getEmailDetail(String id) async {
     final token = await getToken();
     final res = await http.get(
       Uri.parse('$backendUrl/$id'),
@@ -52,8 +54,13 @@ class EmailRepository {
     }
 
     final json = jsonDecode(res.body);
-    print(json);
-    return Email.fromJson(json);
+    return EmailThread(
+      email: Email.fromJson(json['email']),
+      replies:
+          (json['thread'] as List)
+              .map((e) => EmailResponseModel.fromJson(e))
+              .toList(),
+    );
   }
 
   Future<List<EmailResponseModel>> getSent() async {
@@ -245,7 +252,8 @@ class EmailRepository {
       headers: {'Authorization': 'Bearer $token'},
     );
     if (res.statusCode != 200) {
-      final errorMessage = jsonDecode(res.body)['message'] ?? 'Get emails by label failed';
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Get emails by label failed';
       throw Exception(errorMessage);
     }
 
@@ -253,6 +261,66 @@ class EmailRepository {
     return json
         .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
         .toList();
+  }
+
+  Future<void> addLabelToEmail(String emailId, LabelModel label) async {
+    final token = await getToken();
+    final res = await http.post(
+      Uri.parse('$backendUrl/$emailId/labels'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'label': label.toJson()}),
+    );
+    if (res.statusCode != 200) {
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Add label to email failed';
+      throw Exception(errorMessage);
+    }
+  }
+
+  Future<void> removeLabelFromEmail(String emailId, LabelModel label) async {
+    final token = await getToken();
+    final res = await http.delete(
+      Uri.parse('$backendUrl/$emailId/labels/${label.id}'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Remove label from email failed';
+      throw Exception(errorMessage);
+    }
+  }
+
+  Future<void> saveDraft(Email email) async {
+    final token = await getToken();
+    final res = await http.post(
+      Uri.parse('$backendUrl/drafts'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(email.toJson()),
+    );
+    if (res.statusCode != 201) {
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Save draft failed';
+      throw Exception(errorMessage);
+    }
+  }
+
+  Future<void> deleteDraft(String id) async {
+    final token = await getToken();
+    final res = await http.delete(
+      Uri.parse('$backendUrl/drafts/$id'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      final errorMessage =
+          jsonDecode(res.body)['message'] ?? 'Delete draft failed';
+      throw Exception(errorMessage);
+    }
   }
 
   void dispose() {

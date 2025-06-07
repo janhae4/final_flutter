@@ -1,10 +1,12 @@
 import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/data/models/label_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_state.dart';
+import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
 import 'package:final_flutter/presentation/screens/email/detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,16 +14,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class InboxScreen extends StatefulWidget {
   final UserModel? user;
   final int tabIndex;
-  const InboxScreen({super.key, required this.user, required this.tabIndex});
+  final List<LabelModel>? labels;
+  const InboxScreen({
+    super.key,
+    required this.user,
+    required this.tabIndex,
+    this.labels,
+  });
 
   @override
   _InboxScreenState createState() => _InboxScreenState();
 }
 
-class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClientMixin {
+class _InboxScreenState extends State<InboxScreen>
+    with AutomaticKeepAliveClientMixin {
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingButton = false;
-  String _selectedFilter = 'All';
+  String _selectedFilter = 'List';
 
   @override
   bool get wantKeepAlive => true;
@@ -72,7 +81,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   }
 
   Widget _buildFilterChips() {
-    final filters = ['All', 'Unread', 'Starred', 'Important'];
+    final filters = ['List', 'Grid'];
 
     return SliverToBoxAdapter(
       child: Container(
@@ -108,7 +117,6 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                 ),
                 onSelected: (selected) {
                   setState(() => _selectedFilter = filter);
-                  // context.read<EmailBloc>().add(FilterEmailsEvent(filter));
                 },
               ),
             );
@@ -126,7 +134,12 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
     if (state is EmailLoading) {
       return _buildLoadingState();
     } else if (state is EmailLoaded) {
-      return _buildEmailListView(state.emails);
+      if (_selectedFilter == 'Grid') {
+        return _buildEmailGridView(state.emails);
+      }
+      if (_selectedFilter == 'List') {
+        return _buildEmailListView(state.emails);
+      }
     } else if (state is EmailError) {
       print(state.message);
       return _buildErrorState(state.message);
@@ -199,6 +212,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   }
 
   Widget _buildEmailListView(List<EmailResponseModel> emails) {
+    print (emails[0].labels);
     if (emails.isEmpty) {
       return _buildEmptyState();
     }
@@ -206,6 +220,29 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      itemCount: emails.length,
+      itemBuilder: (context, index) {
+        final email = emails[index];
+        return _buildEmailItem(email);
+      },
+    );
+  }
+
+  Widget _buildEmailGridView(List<EmailResponseModel> emails) {
+    if (emails.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2, // Số cột
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 3,
+      ),
       itemCount: emails.length,
       itemBuilder: (context, index) {
         final email = emails[index];
@@ -231,7 +268,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                 Row(
                   children: [
                     _buildSenderAvatar(email.sender!),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +331,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    if (email.attachments.isNotEmpty)
+                    if (email.attachmentsCount > 0)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -314,7 +351,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${email.attachments.length}',
+                              '${email.attachmentsCount}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: AppColors.info,
@@ -340,77 +377,175 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
                     ),
                     const SizedBox(width: 8),
                     PopupMenuButton<String>(
-                      icon: const Icon(
-                        Icons.more_vert,
-                        size: 20,
-                        color: AppColors.textTertiary,
+                      offset: const Offset(0, 8),
+                      elevation: 8,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: EdgeInsets.zero,
-                      onSelected: (value) => _handleEmailAction(email, value),
+                      color: Theme.of(context).cardColor,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.transparent,
+                        ),
+                        child: Icon(
+                          Icons.more_vert_rounded,
+                          color: AppColors.textSecondary,
+                          size: 20,
+                        ),
+                      ),
+                      onSelected: (value) {
+                        if (value.startsWith('label_')) {
+                          final labelId = value.replaceFirst('label_', '');
+                          final labelModel = widget.labels!.firstWhere(
+                            (l) => l.id == labelId,
+                          );
+                          _handleEmailAction(email, 'label', labelModel);
+                        } else {
+                          _handleEmailAction(email, value, null);
+                        }
+                      },
                       itemBuilder:
                           (context) => [
+                            if (widget.labels != null &&
+                                widget.labels!.isNotEmpty) ...[
+                              PopupMenuItem<String>(
+                                value: 'select_label',
+                                enabled: false,
+                                height: 32,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Text(
+                                    'LABELS',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary.withAlpha(
+                                        (255 * 0.8).toInt(),
+                                      ),
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                enabled: false,
+                                height: 1,
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: AppColors.textSecondary.withAlpha(
+                                    (255 * 0.1).toInt(),
+                                  ),
+                                ),
+                              ),
+                              ...widget.labels!.map(
+                                (label) => PopupMenuItem<String>(
+                                  value: 'label_${label.id}',
+                                  height: 48,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: _getLabelColor(
+                                              label,
+                                            ).withAlpha((255 * 0.1).toInt()),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.label_rounded,
+                                            size: 14,
+                                            color: _getLabelColor(label),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            label.label,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        if (email.labels.map((l) => l['_id']).contains(label.id))
+                                          Icon(
+                                            Icons.check_rounded,
+                                            color: AppColors.success,
+                                            size: 20,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                enabled: false,
+                                height: 8,
+                                child: Divider(
+                                  height: 8,
+                                  thickness: 1,
+                                  color: AppColors.textSecondary.withAlpha(
+                                    (255 * 0.1).toInt(),
+                                  ),
+                                ),
+                              ),
+                            ],
+
                             PopupMenuItem(
                               value: 'mark_read',
-                              child: Row(
-                                children: [
-                                  Icon(
+                              height: 48,
+                              child: _buildActionItem(
+                                icon:
                                     email.isRead
-                                        ? Icons.mark_email_unread
-                                        : Icons.mark_email_read,
-                                    size: 20,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
+                                        ? Icons.mark_email_unread_rounded
+                                        : Icons.mark_email_read_rounded,
+                                text:
                                     email.isRead
                                         ? 'Mark as unread'
                                         : 'Mark as read',
-                                  ),
-                                ],
+                                color: AppColors.primary,
                               ),
                             ),
-                            const PopupMenuItem(
+
+                            PopupMenuItem(
                               value: 'archive',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.archive,
-                                    size: 20,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  SizedBox(width: 12),
-                                  Text('Archive'),
-                                ],
+                              height: 48,
+                              child: _buildActionItem(
+                                icon: Icons.archive_rounded,
+                                text: 'Archive',
+                                color: AppColors.textSecondary,
                               ),
                             ),
 
                             email.isInTrash
                                 ? PopupMenuItem(
                                   value: 'restore',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.restore_from_trash,
-                                        size: 20,
-                                        color: AppColors.accent,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text('Restore'),
-                                    ],
+                                  height: 48,
+                                  child: _buildActionItem(
+                                    icon: Icons.restore_from_trash_rounded,
+                                    text: 'Restore',
+                                    color: AppColors.accent,
                                   ),
                                 )
                                 : PopupMenuItem(
                                   value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.delete,
-                                        size: 20,
-                                        color: AppColors.deleteColor,
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text('Delete'),
-                                    ],
+                                  height: 48,
+                                  child: _buildActionItem(
+                                    icon: Icons.delete_rounded,
+                                    text: 'Delete',
+                                    color: AppColors.deleteColor,
                                   ),
                                 ),
                           ],
@@ -423,6 +558,49 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
         ),
       ),
     );
+  }
+
+  Widget _buildActionItem({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color.withAlpha((255 * 0.1).toInt()),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: color),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getLabelColor(LabelModel label) {
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.red,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+    ];
+
+    return colors[label.id.hashCode % colors.length];
   }
 
   Widget _buildSenderAvatar(String sender) {
@@ -504,7 +682,7 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                // context.read<EmailBloc>().add(LoadInboxEvent());
+                context.read<EmailBloc>().add(LoadEmails(widget.tabIndex));
               },
               child: const Text('Retry'),
             ),
@@ -530,16 +708,29 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
   }
 
   void _openEmail(String emailId) async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => BlocProvider.value(
-              value: context.read<EmailBloc>(),
-              child: EmailDetailScreen(user: widget.user, id: emailId),
-            ),
-      ),
-    );
+    if (widget.tabIndex == 3) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => BlocProvider.value(
+                value: context.read<EmailBloc>(),
+                child: ComposeEmailScreen(user: widget.user, emailId: emailId),
+              ),
+        ),
+      );
+    } else {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => BlocProvider.value(
+                value: context.read<EmailBloc>(),
+                child: EmailDetailScreen(user: widget.user, id: emailId),
+              ),
+        ),
+      );
+    }
 
     if (mounted) {
       context.read<EmailBloc>().add(LoadEmails(widget.tabIndex));
@@ -550,10 +741,19 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
     context.read<EmailBloc>().add(ToggleStarEmail(email.id!));
   }
 
-  void _handleEmailAction(EmailResponseModel email, String action) {
+  void _handleEmailAction(
+    EmailResponseModel email,
+    String action,
+    LabelModel? label,
+  ) {
     switch (action) {
+      case 'label':
+        context.read<EmailBloc>().add(AddLabelToEmail(email.id!, label!));
+        break;
       case 'mark_read':
-        context.read<EmailBloc>().add(MarkEmailAsRead(email.id!, true));
+        if (!email.isRead) {
+          context.read<EmailBloc>().add(MarkEmailAsRead(email.id!, false));
+        }
         break;
       case 'archive':
         break;
@@ -565,6 +765,4 @@ class _InboxScreenState extends State<InboxScreen> with AutomaticKeepAliveClient
         break;
     }
   }
-
-  void _composeEmail() {}
 }

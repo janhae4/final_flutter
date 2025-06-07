@@ -4,6 +4,7 @@ class EmailResponseModel {
   final String? subject;
   final String? plainTextContent;
   final List<dynamic> attachments;
+  final int attachmentsCount;
   final List<dynamic> labels;
   late final bool starred;
   final bool isRead;
@@ -17,6 +18,7 @@ class EmailResponseModel {
     this.subject,
     this.plainTextContent,
     this.attachments,
+    this.attachmentsCount,
     this.labels,
     this.starred,
     this.isRead,
@@ -32,7 +34,8 @@ class EmailResponseModel {
       json['subject'],
       json['plainTextContent'],
       json['attachments'] ?? [],
-      json['labels'] ?? [],
+      json['attachmentsCount'] ?? 0,
+      List<dynamic>.from(json['labels'] as List<dynamic>),
       json['starred'] ?? false,
       json['isRead'] ?? false,
       json['isDraft'] ?? false,

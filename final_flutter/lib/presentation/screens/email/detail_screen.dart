@@ -5,12 +5,12 @@ import 'dart:js_interop';
 import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_attachment_model.dart';
+import 'package:final_flutter/data/models/email_response_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/logic/email/email_state.dart';
 import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
-import 'package:final_flutter/presentation/screens/email/foward_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,8 +18,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
-import 'package:web/web.dart' as html;
 import 'package:path_provider/path_provider.dart';
+import 'package:web/web.dart' as html;
 
 class EmailDetailScreen extends StatefulWidget {
   final UserModel? user;
@@ -34,30 +34,41 @@ class EmailDetailScreen extends StatefulWidget {
 class _EmailDetailScreenState extends State<EmailDetailScreen>
     with TickerProviderStateMixin {
   Email? currentEmail;
+  List<EmailResponseModel>? threadEmail;
   QuillController? _quillController;
-  late AnimationController _fabAnimationController;
-  late AnimationController _headerAnimationController;
+  late AnimationController _slideController;
+  late AnimationController _fadeController;
+  late AnimationController _floatingController;
   bool _showMetadata = false;
-  final bool _isLoading = false;
+  bool _showConversation = true;
 
   @override
   void initState() {
     super.initState();
+    _initializeAnimations();
     context.read<EmailBloc>().add(LoadEmailDetail(widget.id));
-    _fabAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+  }
+
+  void _initializeAnimations() {
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _headerAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 500),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _floatingController = AnimationController(
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
   }
 
   @override
   void dispose() {
-    _fabAnimationController.dispose();
-    _headerAnimationController.dispose();
+    _slideController.dispose();
+    _fadeController.dispose();
+    _floatingController.dispose();
     _quillController?.dispose();
     super.dispose();
   }
@@ -66,141 +77,1051 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: BlocConsumer<EmailBloc, EmailState>(
-        listener: (context, state) {
-          if (state is EmailDetailLoaded) {
-            setState(() {
-              currentEmail = state.email;
-              final document = Document.fromJson(state.email.content);
-
-              _quillController = QuillController(
-                document: document,
-                selection: const TextSelection.collapsed(offset: 0),
-                readOnly: true,
-              );
-            });
-
-            _markAsRead();
-            _headerAnimationController.forward();
-          }
-        },
+        listener: _handleBlocState,
         builder: (context, state) {
           if (currentEmail == null) {
-            return const Center(child: CircularProgressIndicator());
+            return _buildLoadingScreen();
           }
-          return CustomScrollView(
-            slivers: [
-              _buildSliverAppBar(),
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    _buildEmailHeader(),
-                    _buildEmailContent(),
-                    if (_showMetadata) _buildMetadata(),
-                    _buildAttachments(),
-                    const SizedBox(height: 100),
-                  ],
-                ),
-              ),
-            ],
-          );
+          return _buildEmailContent();
         },
       ),
-      floatingActionButton: _buildFloatingActionButtons(),
+      floatingActionButton: _buildFloatingActions(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
-  void _markAsRead() {
-    if (!currentEmail!.isRead) {
+  void _handleBlocState(BuildContext context, EmailState state) {
+    if (state is EmailDetailLoaded) {
       setState(() {
-        currentEmail = currentEmail?.copyWith(isRead: true);
+        currentEmail = state.emailThread.email;
+        threadEmail = state.emailThread.replies;
+        final document = Document.fromJson(state.emailThread.email.content);
+        _quillController = QuillController(
+          document: document,
+          selection: const TextSelection.collapsed(offset: 0),
+          readOnly: true,
+        );
       });
+      _markAsRead();
+      _slideController.forward();
+      _fadeController.forward();
+      _floatingController.forward();
+    } else if (state is EmailError) {
+      _showErrorSnackBar(state.message);
     }
   }
 
-  void _toggleStar() {
-    HapticFeedback.lightImpact();
-    context.read<EmailBloc>().add(ToggleStarEmail(currentEmail!.id));
-
-    setState(() {
-      currentEmail = currentEmail?.copyWith(starred: !currentEmail!.starred);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(currentEmail!.starred ? 'Email starred' : 'Star removed'),
-        duration: const Duration(seconds: 2),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  void _moveToTrash() {
-    HapticFeedback.mediumImpact();
-
-    context.read<EmailBloc>().add(DeleteEmail(currentEmail!.id));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Email moved to trash'),
-        action: SnackBarAction(
-          label: 'Undo',
-          onPressed: () {
-            context.read<EmailBloc>().add(RestoreEmail(currentEmail!.id));
-          },
-        ),
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-      ),
-    );
-  }
-
-  void _showLabelsDialog() {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Manage Labels'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildLabelChip('Work', Colors.blue),
-                _buildLabelChip('Personal', Colors.green),
-                _buildLabelChip('Important', Colors.red),
-                _buildLabelChip('Projects', Colors.orange),
-              ],
+  Widget _buildLoadingScreen() {
+    return Container(
+      decoration: _buildGradientBackground(),
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              strokeWidth: 3,
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Done'),
+            SizedBox(height: 16),
+            Text(
+              'Loading email...',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmailContent() {
+    return Container(
+      decoration: _buildGradientBackground(),
+      child: SafeArea(
+        child: Column(
+          children: [
+            _buildModernHeader(),
+            Expanded(child: _buildScrollableContent()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _buildGradientBackground() {
+    return const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.primary, Color(0xFF764ba2)],
+      ),
+    );
+  }
+
+  Widget _buildModernHeader() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, -1),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withAlpha((0.2 * 255).toInt()),
+              Colors.white.withAlpha((0.1 * 255).toInt()),
             ],
           ),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(32),
+            bottomRight: Radius.circular(32),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeaderActions(),
+            const SizedBox(height: 16),
+            _buildSubjectTitle(),
+            const SizedBox(height: 8),
+            _buildEmailMeta(),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildLabelChip(String label, Color color) {
-    final isSelected = currentEmail!.labels.contains(label);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: FilterChip(
-        label: Text(label),
-        selected: isSelected,
-        onSelected: (selected) {
-          setState(() {
-            if (selected) {
-              currentEmail!.labels.add(label);
-            } else {
-              currentEmail!.labels.remove(label);
-            }
-          });
-        },
-        selectedColor: color.withOpacity(0.2),
-        checkmarkColor: color,
+  Widget _buildHeaderActions() {
+    return Row(
+      children: [
+        _buildBackButton(),
+        const Spacer(),
+        _buildStarButton(),
+        const SizedBox(width: 8),
+        _buildMoreButton(),
+      ],
+    );
+  }
+
+  Widget _buildBackButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha((255 * 0.2).toInt()),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(
+          Icons.arrow_back_ios_new,
+          color: Colors.white,
+          size: 20,
+        ),
       ),
     );
+  }
+
+  Widget _buildStarButton() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        color:
+            currentEmail!.starred
+                ? Colors.amber.withAlpha((255 * 0.3).toInt())
+                : Colors.white.withAlpha((255 * 0.2).toInt()),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: IconButton(
+        onPressed: _toggleStar,
+        icon: Icon(
+          currentEmail!.starred ? Icons.star : Icons.star_border,
+          color: currentEmail!.starred ? Colors.amber : Colors.white,
+          size: 22,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoreButton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha((255 * 0.2).toInt()),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: PopupMenuButton<String>(
+        icon: const Icon(Icons.more_vert, color: Colors.white),
+        onSelected: _handleMenuAction,
+        itemBuilder:
+            (context) => [
+              _buildPopupMenuItem(
+                'metadata',
+                _showMetadata ? Icons.visibility_off : Icons.visibility,
+                _showMetadata ? 'Hide details' : 'Show details',
+              ),
+              _buildPopupMenuItem(
+                'labels',
+                Icons.label_outline,
+                'Manage labels',
+              ),
+              const PopupMenuDivider(),
+              _buildPopupMenuItem(
+                'trash',
+                Icons.delete_outline,
+                'Move to trash',
+                isDestructive: true,
+              ),
+            ],
+      ),
+    );
+  }
+
+  PopupMenuItem<String> _buildPopupMenuItem(
+    String value,
+    IconData icon,
+    String text, {
+    bool isDestructive = false,
+  }) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: isDestructive ? Colors.red : null),
+          const SizedBox(width: 12),
+          Text(
+            text,
+            style: TextStyle(color: isDestructive ? Colors.red : null),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubjectTitle() {
+    return FadeTransition(
+      opacity: _fadeController,
+      child: Text(
+        currentEmail!.subject.isEmpty ? 'No Subject' : currentEmail!.subject,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          height: 1.2,
+        ),
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _buildEmailMeta() {
+    return FadeTransition(
+      opacity: _fadeController,
+      child: Text(
+        'From ${currentEmail!.sender} • ${_formatDate(currentEmail!.time)} • ${currentEmail!.attachments.length} attachment${currentEmail!.attachments.length != 1 ? 's' : ''}',
+        style: TextStyle(
+          color: Colors.white.withAlpha((0.8 * 255).toInt()),
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrollableContent() {
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(32),
+        topRight: Radius.circular(32),
+      ),
+      child: Container(
+        color: const Color(0xFFF8FAFC),
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.all(20),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildSenderCard(),
+                  const SizedBox(height: 20),
+                  _buildEmailBodyCard(),
+                  const SizedBox(height: 20),
+                  if (_showMetadata) ...[
+                    _buildMetadataCard(),
+                    const SizedBox(height: 20),
+                  ],
+                  if (currentEmail!.attachments.isNotEmpty) ...[
+                    _buildAttachmentsCard(),
+                    const SizedBox(height: 20),
+                  ],
+                  if (threadEmail!.isNotEmpty) ...[
+                    _buildConversationCard(),
+                    const SizedBox(height: 20),
+                  ],
+                  _buildStatusBadges(),
+                  const SizedBox(height: 100),
+                ]),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSenderCard() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.5),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _slideController,
+          curve: const Interval(0.2, 1.0, curve: Curves.easeOutCubic),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.05).toInt()),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _buildSenderAvatar(),
+            const SizedBox(width: 16),
+            Expanded(child: _buildSenderInfo()),
+            _buildQuickActions(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSenderAvatar() {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.primary, Color(0xFF764ba2)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withAlpha((255 * 0.3).toInt()),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          currentEmail!.sender.substring(0, 1).toUpperCase(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSenderInfo() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          currentEmail!.sender,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'to ${currentEmail!.to.join(', ')}',
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          DateFormat('MMM d, yyyy at h:mm a').format(currentEmail!.time),
+          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Column(
+      children: [
+        _buildActionButton(
+          Icons.reply,
+          () => _replyToEmail(),
+          const Color(0xFF3B82F6),
+        ),
+        const SizedBox(height: 8),
+        _buildActionButton(
+          Icons.forward,
+          () => _forwardEmail(),
+          const Color(0xFF10B981),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionButton(
+    IconData icon,
+    VoidCallback onPressed,
+    Color color,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withAlpha((0.1 * 255).toInt()),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon, color: color, size: 20),
+        iconSize: 20,
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+      ),
+    );
+  }
+
+  Widget _buildEmailBodyCard() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.5),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _slideController,
+          curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.05).toInt()),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.email_outlined,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Message',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (_quillController != null)
+              QuillEditor.basic(
+                configurations: QuillEditorConfigurations(
+                  controller: _quillController!,
+                ),
+              )
+            else
+              const Text(
+                'This email appears to be empty or contains only formatting.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B7280),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentsCard() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.5),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _slideController,
+          curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.05).toInt()),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.attach_file,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Attachments (${currentEmail!.attachments.length})',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ...currentEmail!.attachments
+                .map((attachment) => _buildAttachmentItem(attachment))
+                .toList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentItem(EmailAttachment attachment) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          _buildAttachmentIcon(attachment),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  attachment.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _getFileType(attachment.name),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          _buildDownloadButton(attachment),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachmentIcon(EmailAttachment attachment) {
+    IconData icon;
+    Color color;
+
+    if (attachment.name.toLowerCase().endsWith('.pdf')) {
+      icon = Icons.picture_as_pdf;
+      color = const Color(0xFFEF4444);
+    } else if (attachment.name.toLowerCase().contains(
+      RegExp(r'\.(jpg|jpeg|png|gif)$'),
+    )) {
+      icon = Icons.image;
+      color = const Color(0xFF10B981);
+    } else if (attachment.name.toLowerCase().contains(
+      RegExp(r'\.(doc|docx)$'),
+    )) {
+      icon = Icons.description;
+      color = const Color(0xFF3B82F6);
+    } else {
+      icon = Icons.insert_drive_file;
+      color = const Color(0xFF6B7280);
+    }
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: color.withAlpha((0.1 * 255).toInt()),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(icon, color: color, size: 24),
+    );
+  }
+
+  Widget _buildDownloadButton(EmailAttachment attachment) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF10B981), Color(0xFF059669)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            if (kIsWeb) {
+              downloadAttachmentWeb(attachment);
+            } else {
+              downloadAttachment(attachment);
+            }
+          },
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.download, color: Colors.white, size: 16),
+                SizedBox(width: 4),
+                Text(
+                  'Download',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConversationCard() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.5),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _slideController,
+          curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.05).toInt()),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.forum_outlined,
+                  size: 20,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Conversation Thread',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildConversationMessage(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConversationMessage() {
+    return Column(
+      children:
+          threadEmail!.map((email) {
+            print('Processing email: ${email.id}');
+            print('Sender: ${email.sender}');
+            print(email.createdAt);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Center(
+                        child: Text(
+                          email.sender!.substring(0, 1).toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                email.sender!,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF374151),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                DateFormat(
+                                  'MMM d, h:mm a',
+                                ).format(email.createdAt!),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            email.plainTextContent!.trim().isEmpty
+                                ? 'This message contains formatted content or attachments.'
+                                : email.plainTextContent!.trim(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Color(0xFF4B5563),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+    );
+  }
+
+  Widget _buildStatusBadges() {
+    final badges = <Widget>[];
+
+    if (currentEmail!.isRead) {
+      badges.add(_buildStatusBadge('Read', const Color(0xFF10B981)));
+    }
+
+    if (currentEmail!.starred) {
+      badges.add(_buildStatusBadge('Starred', const Color(0xFFF59E0B)));
+    }
+
+    if (currentEmail!.isDraft) {
+      badges.add(_buildStatusBadge('Draft', const Color(0xFF6B7280)));
+    }
+
+    if (currentEmail!.isInTrash) {
+      badges.add(_buildStatusBadge('In Trash', const Color(0xFFEF4444)));
+    } else {
+      badges.add(_buildStatusBadge('Normal', const Color(0xFF3B82F6)));
+    }
+
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.5),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _slideController,
+          curve: const Interval(0.6, 1.0, curve: Curves.easeOutCubic),
+        ),
+      ),
+      child: Wrap(spacing: 8, runSpacing: 8, children: badges),
+    );
+  }
+
+  Widget _buildStatusBadge(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withAlpha((0.1 * 255).toInt()),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataCard() {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.5),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _slideController,
+          curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha((255 * 0.05).toInt()),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.info_outline, size: 20, color: AppColors.primary),
+                SizedBox(width: 8),
+                Text(
+                  'Email Details',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF374151),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildMetadataRow('From', currentEmail!.sender),
+            _buildMetadataRow('To', currentEmail!.to.join(', ')),
+            if (currentEmail!.cc.isNotEmpty)
+              _buildMetadataRow('CC', currentEmail!.cc.join(', ')),
+            if (currentEmail!.bcc.isNotEmpty)
+              _buildMetadataRow('BCC', currentEmail!.bcc.join(', ')),
+            _buildMetadataRow(
+              'Date',
+              DateFormat(
+                'EEEE, MMMM d, y \'at\' h:mm a',
+              ).format(currentEmail!.time),
+            ),
+            _buildMetadataRow('Subject', currentEmail!.subject),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            child: SelectableText(
+              value,
+              style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingActions() {
+    return ScaleTransition(
+      scale: _floatingController,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton.small(
+            heroTag: "reply",
+            onPressed: _replyToEmail,
+            backgroundColor: const Color(0xFF3B82F6),
+            child: const Icon(Icons.reply, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.small(
+            heroTag: "forward",
+            onPressed: _forwardEmail,
+            backgroundColor: const Color(0xFF10B981),
+            child: const Icon(Icons.forward, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: "compose",
+            onPressed: _composeNewEmail,
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.edit, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper methods
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return DateFormat('h:mm a').format(date);
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return DateFormat('EEEE').format(date);
+    } else {
+      return DateFormat('MMM d').format(date);
+    }
+  }
+
+  String _getFileType(String fileName) {
+    final extension = fileName.split('.').last.toLowerCase();
+    switch (extension) {
+      case 'pdf':
+        return 'PDF Document';
+      case 'doc':
+      case 'docx':
+        return 'Word Document';
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+        return 'Image';
+      case 'txt':
+        return 'Text File';
+      case 'zip':
+      case 'rar':
+        return 'Archive';
+      default:
+        return 'File';
+    }
+  }
+
+  void _markAsRead() {
+    // if (!currentEmail!.isRead) {
+    //   print('Marking email as read: ${currentEmail!.id}, ${currentEmail!.isRead}');
+    //   context.read<EmailBloc>().add(MarkEmailAsRead(currentEmail!.id, currentEmail!.isRead));
+    // }
+  }
+
+  void _toggleStar() {
+    context.read<EmailBloc>().add(ToggleStarEmail(currentEmail!.id));
+    setState(() {
+      currentEmail = currentEmail!.copyWith(starred: !currentEmail!.starred);
+    });
+  }
+
+  void _handleMenuAction(String action) {
+    switch (action) {
+      case 'metadata':
+        setState(() {
+          _showMetadata = !_showMetadata;
+        });
+        break;
+      case 'labels':
+        _showLabelsDialog();
+        break;
+      case 'trash':
+        _moveToTrash();
+        break;
+    }
   }
 
   void _replyToEmail() {
@@ -215,7 +1136,6 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   }
 
   void _forwardEmail() {
-    print("FORWARD EMAIL");
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -223,6 +1143,60 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
             (context) =>
                 ComposeEmailScreen(user: widget.user!, forward: currentEmail!),
       ),
+    );
+  }
+
+  void _composeNewEmail() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ComposeEmailScreen(user: widget.user!),
+      ),
+    );
+  }
+
+  void _showLabelsDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Manage Labels'),
+            content: const Text('Label management functionality coming soon!'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _moveToTrash() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Move to Trash'),
+            content: const Text(
+              'Are you sure you want to move this email to trash?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  context.read<EmailBloc>().add(DeleteEmail(currentEmail!.id));
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Close email detail
+                },
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Move to Trash'),
+              ),
+            ],
+          ),
     );
   }
 
@@ -255,367 +1229,24 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     html.URL.revokeObjectURL(url);
   }
 
-  Widget _buildSliverAppBar() {
-    return SliverAppBar(
-      expandedHeight: 120,
-      floating: false,
-      pinned: true,
-      elevation: 0,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      foregroundColor: Theme.of(context).colorScheme.onSurface,
-      flexibleSpace: FlexibleSpaceBar(
-        title: Text(
-          currentEmail!.subject,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        titlePadding: const EdgeInsets.only(left: 72, right: 16, bottom: 16),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            currentEmail!.starred ? Icons.star : Icons.star_border,
-            color: currentEmail!.starred ? AppColors.starColor : null,
-          ),
-          onPressed: _toggleStar,
-          tooltip: currentEmail!.starred ? 'Remove star' : 'Add star',
-        ),
-        PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (value) {
-            switch (value) {
-              case 'metadata':
-                setState(() => _showMetadata = !_showMetadata);
-                break;
-              case 'labels':
-                _showLabelsDialog();
-                break;
-              case 'trash':
-                _moveToTrash();
-                break;
-            }
-          },
-          itemBuilder:
-              (context) => [
-                PopupMenuItem(
-                  value: 'metadata',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline),
-                      const SizedBox(width: 12),
-                      Text(_showMetadata ? 'Hide details' : 'Show details'),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem(
-                  value: 'labels',
-                  child: Row(
-                    children: [
-                      Icon(Icons.label_outline),
-                      SizedBox(width: 12),
-                      Text('Manage labels'),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'trash',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_outline, color: AppColors.error),
-                      SizedBox(width: 12),
-                      Text(
-                        'Move to trash',
-                        style: TextStyle(color: AppColors.error),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmailHeader() {
-    return SlideTransition(
-      position: Tween<Offset>(
-        begin: const Offset(0, -0.5),
-        end: Offset.zero,
-      ).animate(
-        CurvedAnimation(
-          parent: _headerAnimationController,
-          curve: Curves.easeOutBack,
-        ),
-      ),
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        child: Card(
-          elevation: 0,
-          color: Theme.of(context).colorScheme.surfaceContainerLowest,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      child: Text(
-                        currentEmail!.sender.substring(0, 1).toUpperCase(),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            currentEmail!.sender,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          Text(
-                            'to ${currentEmail!.to.join(', ')}',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodySmall?.copyWith(
-                              color:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      DateFormat('MMM d, h:mm a').format(currentEmail!.time),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-                if (currentEmail!.labels.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
-                    children:
-                        currentEmail!.labels.map((label) {
-                          return Chip(
-                            label: Text(
-                              label,
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                            backgroundColor:
-                                Theme.of(
-                                  context,
-                                ).colorScheme.secondaryContainer,
-                            side: BorderSide.none,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                          );
-                        }).toList(),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
-  Widget _buildEmailContent() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Card(
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: QuillEditor.basic(
-            configurations: QuillEditorConfigurations(
-              controller: _quillController!,
-            ),
-          ),
-        ),
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-    );
-  }
-
-  Widget _buildMetadata() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.all(16),
-      child: Card(
-        elevation: 0,
-        color: Theme.of(context).colorScheme.surfaceContainerLowest,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Email Details',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              _buildMetadataRow('From', currentEmail!.sender),
-              _buildMetadataRow('To', currentEmail!.to.join(', ')),
-              if (currentEmail!.cc.isNotEmpty)
-                _buildMetadataRow('CC', currentEmail!.cc.join(', ')),
-              if (currentEmail!.bcc.isNotEmpty)
-                _buildMetadataRow('BCC', currentEmail!.bcc.join(', ')),
-              _buildMetadataRow(
-                'Date',
-                DateFormat(
-                  'EEEE, MMMM d, y \'at\' h:mm a',
-                ).format(currentEmail!.time),
-              ),
-              _buildMetadataRow('Subject', currentEmail!.subject),
-              _buildMetadataRow('Status', _getStatusText()),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetadataRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Expanded(
-            child: SelectableText(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _getStatusText() {
-    List<String> status = [];
-    if (currentEmail!.isRead) status.add('Read');
-    if (currentEmail!.starred) status.add('Starred');
-    if (currentEmail!.isDraft) status.add('Draft');
-    if (currentEmail!.isInTrash) status.add('In Trash');
-    return status.isEmpty ? 'Normal' : status.join(', ');
-  }
-
-  Widget _buildAttachments() {
-    if (currentEmail!.attachments.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      margin: const EdgeInsets.all(16),
-      child: Card(
-        elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.attach_file),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Attachments (${currentEmail!.attachments.length})',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              ...currentEmail!.attachments.map((attachment) {
-                return ListTile(
-                  leading:
-                      attachment.bytes != null &&
-                                  attachment.name.endsWith('.png') ||
-                              attachment.name.endsWith('.jpg') ||
-                              attachment.name.endsWith('.jpeg')
-                          ? Image.memory(
-                            base64Decode(attachment.bytes!),
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.cover,
-                          )
-                          : const Icon(Icons.insert_drive_file),
-                  title: Text(attachment.name),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.download),
-                        onPressed: () {
-                          if (kIsWeb) {
-                            downloadAttachmentWeb(attachment);
-                          } else {
-                            downloadAttachment(attachment);
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Downloading $attachment...'),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  contentPadding: EdgeInsets.zero,
-                );
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionButtons() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FloatingActionButton.small(
-          heroTag: "forward",
-          onPressed: _forwardEmail,
-          tooltip: 'Forward',
-          child: const Icon(Icons.forward),
-        ),
-        const SizedBox(height: 8),
-        FloatingActionButton(
-          heroTag: "reply",
-          onPressed: _replyToEmail,
-          tooltip: 'Reply',
-          child: const Icon(Icons.reply),
-        ),
-      ],
     );
   }
 }

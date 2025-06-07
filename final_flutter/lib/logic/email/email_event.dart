@@ -1,5 +1,6 @@
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/data/models/label_model.dart';
 
 abstract class EmailEvent {}
 
@@ -116,4 +117,31 @@ class SearchEmail extends EmailEvent {
 class FilterByLabel extends EmailEvent {
   final String label;
   FilterByLabel(this.label);
+}
+
+
+class AddLabelToEmail extends EmailEvent {
+  final String emailId;
+  final LabelModel label;
+
+  AddLabelToEmail(this.emailId, this.label);
+}
+
+class RemoveLabelFromEmail extends EmailEvent {
+  final String emailId;
+  final LabelModel label;
+
+  RemoveLabelFromEmail(this.emailId, this.label);
+}
+
+class DraftEmail extends EmailEvent {
+  final Email email;
+
+  DraftEmail(this.email);
+}
+
+class DeleteDraft extends EmailEvent {
+  final String emailId;
+
+  DeleteDraft(this.emailId);
 }

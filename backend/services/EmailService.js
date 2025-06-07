@@ -2,15 +2,16 @@ const Email = require('../models/Email');
 const User = require('../models/User');
 const { userSockets } = require('../db/websocket');
 
-exports.createEmail = async (userId, data) => {
-    const resolveUsers = async (emails) => {
-        if (!emails) return [];
-        const users = await Promise.all(
-            emails.map(email => User.findOne({ email }).select('_id'))
-        );
-        return users.filter(Boolean).map(user => user._id);
-    };
+const resolveUsers = async (emails) => {
+    if (!emails) return [];
+    console.log("Resolving Users for Emails:", emails);
+    const users = await Promise.all(
+        emails.map(email => User.findOne({ email }).select('_id'))
+    );
+    return users.filter(Boolean).map(user => user._id);
+};
 
+const saveEmail = async (userId, data) => {
     const [receivers, ccs, bccs] = await Promise.all([
         resolveUsers(data.to),
         resolveUsers(data.cc),
@@ -18,14 +19,21 @@ exports.createEmail = async (userId, data) => {
     ]);
 
     const allReceivers = [...receivers, ...ccs, ...bccs];
-
-    const newEmail = await Email.create({
+    console.log("All Receivers:", allReceivers);
+    return await Email.create({
         ...data,
         senderId: userId,
-        receiverIds: allReceivers
+        receiverIds: allReceivers,
+        attachmentsCount: data.attachments ? data.attachments.length : 0,
     });
+}
+exports.createEmail = async (userId, data) => {
 
-    allReceivers.forEach(receiverId => {
+    const newEmail = await saveEmail(userId, data);
+
+    if (newEmail.isDraft) return newEmail;
+
+    newEmail.receiverIds.forEach(receiverId => {
         const socket = userSockets.get(receiverId.toString());
         if (socket) {
             socket.emit('new_email', {
@@ -33,13 +41,7 @@ exports.createEmail = async (userId, data) => {
                 sender: newEmail.sender,
                 subject: newEmail.subject,
                 plainTextContent: newEmail.plainTextContent,
-                attachments: newEmail.attachments,
-                labels: newEmail.labels,
-                starred: newEmail.starred,
-                isRead: newEmail.isRead,
-                isDraft: newEmail.isDraft,
-                isInTrash: newEmail.isInTrash,
-                createdAt: newEmail.createdAt
+                attachmentsCount: newEmail.attachmentsCount,
             });
         }
     });
@@ -56,14 +58,36 @@ exports.getAllEmails = async (id) =>
                     { receiverIds: id }
                 ]
             },
-            { isInTrash: false }
+            { isInTrash: false },
+            { isSpam: false },
+            { isDraft: false },
         ]
     })
         .sort({ createdAt: -1 })
-        .select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
 
-exports.getEmailById = async (id) => Email.findById(id).select('-senderId -receiverIds -__v -updatedAt');
+exports.getEmailById = async (id) => {
+    const email = await Email.findById(id).select(
+        '+receiverIds +bcc +cc +content +attachments +isReplied +isForwarded +originalEmailId +starred +isDraft +isInTrash +isSpam'
+    ).lean();
 
+    if (!email) throw new Error('Email not found');
+
+    const threadOriginalId = email.originalEmailId || email._id.toString();
+
+    const threadEmails = await Email.find({
+        $or: [
+            { _id: threadOriginalId },
+            { originalEmailId: threadOriginalId },
+        ]
+    }).select(
+        '+receiverIds +bcc +cc +content +attachments +isReplied +isForwarded +originalEmailId +starred +isDraft +isInTrash +isSpam'
+    ).sort({ createdAt: 1 }).lean();
+
+    return {
+        email,
+        thread: threadEmails,
+    };
+};
 exports.updateEmail = async (id, data) => Email.findByIdAndUpdate(id, data, { new: true });
 
 exports.deleteEmail = async (id) => Email.findByIdAndDelete(id);
@@ -121,14 +145,14 @@ exports.searchEmails = async (userId, query) => {
 
 exports.advancedSearch = async (userId, req) => {
     console.log("Advanced Search Query:", req);
-    const { from, to, subject, keywords, hasAttachment, fromDate, toDate , hasAttachments} = req.query;
+    const { from, to, subject, keywords, hasAttachment, fromDate, toDate, hasAttachments } = req.query;
     const query = {
         $and: [
             { isInTrash: false },
             {
                 $or: [
-                    { senderId: userId},
-                    { receiverIds: userId},
+                    { senderId: userId },
+                    { receiverIds: userId },
                 ]
             }
         ]
@@ -152,3 +176,53 @@ exports.advancedSearch = async (userId, req) => {
 
     return await Email.find(query).sort({ createdAt: -1 });
 }
+
+
+exports.getEmailsByLabel = async (userId, label) => {
+    return await Email.find({
+        $and: [
+            {
+                $or: [
+                    { senderId: userId },
+                    { receiverIds: userId }
+                ]
+            },
+            // { labels: { $elemMatch: { label: label._id } } },
+            { isInTrash: false }
+        ]
+    }).sort({ createdAt: -1 });
+};
+
+exports.addLabelToEmail = async (emailId, label) => {
+    const email = await Email.findById(emailId);
+    if (!email) throw new Error('Email not found');
+    if (email.labels.map(l => l.id).includes(label.label._id)) {
+        email.labels = email.labels.filter(l => l._id !== label.label._id);
+    }
+    else {
+        email.labels.push(label.label);
+    }
+    return await email.save();
+};
+
+exports.removeLabelFromEmail = async (emailId, label) => {
+    const email = await Email.findById(emailId);
+    if (!email) throw new Error('Email not found');
+    email.labels = email.labels.filter(l => l._id !== label);
+    return await email.save();
+}
+
+exports.getEmailLabels = async (userId, labelId) => Email.find({
+    $and: [
+        {
+            $or: [
+                { senderId: userId },
+                { receiverIds: userId }
+            ]
+        },
+        { labels: { $elemMatch: { _id: labelId } } },
+        { isInTrash: false }
+    ]
+})
+    .sort({ createdAt: -1 })
+    .select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');

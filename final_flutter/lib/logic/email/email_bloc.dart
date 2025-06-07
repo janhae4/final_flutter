@@ -34,6 +34,10 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     on<NewEmailReceived>(_onNewEmailReceived);
     on<SearchEmail>(_onSearchEmail);
     on<FilterByLabel>(_onFilterByLabel);
+    on<AddLabelToEmail>(_onAddLabelToEmail);
+    on<RemoveLabelFromEmail>(_onRemoveLabelFromEmail);
+    on<DraftEmail>(_onDraftEmail);
+    on<DeleteDraft>(_onDeleteDraft);
   }
 
   Future<void> _onConnectSocket(
@@ -58,6 +62,8 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   Future<void> _onLoadEmails(LoadEmails event, Emitter<EmailState> emit) async {
     try {
       if (state is EmailLoading) return;
+      emit(EmailLoading());
+
       final emails = await _getEmailsForCurrentTab(event.tab);
       emit(EmailLoaded(emails: emails, currentTab: event.tab));
     } catch (e) {
@@ -72,10 +78,12 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     try {
       emit(EmailLoading());
       final email = await _emailRepository.getEmailDetail(event.id);
-      await _emailRepository.markRead(event.id);
-      await _notificationService.markAsRead(event.id);
+      if (email.email.isRead == false) {
+        await _emailRepository.markRead(event.id);
+        await _notificationService.markAsRead(event.id);
+      }
 
-      emit(EmailDetailLoaded(email: email));
+      emit(EmailDetailLoaded(email));
     } catch (e) {
       emit(EmailError(e.toString()));
     }
@@ -158,6 +166,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
+
     await _emailRepository.markRead(event.id);
     await _notificationService.markAsRead(event.id);
 
@@ -226,7 +235,13 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     final currentState = state;
     if (currentState is EmailLoaded) {
       final emails = await _emailRepository.searchEmails(event);
-      emit(EmailLoaded(emails: emails, currentTab: 0, searchQuery: event.keyword ?? ''));
+      emit(
+        EmailLoaded(
+          emails: emails,
+          currentTab: 0,
+          searchQuery: event.keyword ?? '',
+        ),
+      );
     }
   }
 
@@ -238,6 +253,56 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     if (currentState is EmailLoaded) {
       final emails = await _emailRepository.getEmailsByLabel(event.label);
       emit(currentState.copyWith(emails: emails, currentTab: 0));
+    }
+  }
+
+  Future<void> _onAddLabelToEmail(
+    AddLabelToEmail event,
+    Emitter<EmailState> emit,
+  ) async {
+    final currentState = state;
+    emit(EmailLoading());
+    if (currentState is EmailLoaded) {
+      await _emailRepository.addLabelToEmail(event.emailId, event.label);
+      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
+      emit(currentState.copyWith(emails: emails));
+    }
+  }
+
+  Future<void> _onRemoveLabelFromEmail(
+    RemoveLabelFromEmail event,
+    Emitter<EmailState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is EmailLoaded) {
+      emit(EmailLoading());
+
+      await _emailRepository.removeLabelFromEmail(event.emailId, event.label);
+      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
+      emit(currentState.copyWith(emails: emails));
+    }
+  }
+
+  Future<void> _onDraftEmail(DraftEmail event, Emitter<EmailState> emit) async {
+    try {
+      emit(EmailLoading());
+      await _emailRepository.saveDraft(event.email);
+    } catch (e) {
+      emit(EmailError(e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteDraft(
+    DeleteDraft event,
+    Emitter<EmailState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is EmailLoaded) {
+      emit(EmailLoading());
+
+      await _emailRepository.deleteDraft(event.emailId);
+      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
+      emit(currentState.copyWith(emails: emails));
     }
   }
 
