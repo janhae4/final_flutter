@@ -1,3 +1,5 @@
 venv/
 env/
 .venv/
+EMAIL_SPAM_DETECTION.ipynb
+spam_ham_dataset.csv
