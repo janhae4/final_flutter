@@ -32,7 +32,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   UserModel? _user;
-
+  bool _isSpamTab = false;
   final List<String> _appBarTitles = [
     'Inbox',
     'Starred',
@@ -121,6 +121,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               if (emailState is EmailError) {
                 _showSnackBar(context, emailState.message, isError: true);
               }
+              if (emailState is EmailLoading) {
+                _buildLoadingState();
+              }
             },
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
@@ -144,7 +147,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: InboxScreen(
                 key: Key('inbox-screen-$_currentIndex'),
                 user: _user!,
-                tabIndex: _currentIndex,
+                tabIndex: _isSpamTab ? 5 : _currentIndex,
                 labels: _labels ?? [],
               ),
             ),
@@ -164,8 +167,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       title: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: Text(
-          _appBarTitles[_currentIndex],
-          key: ValueKey(_currentIndex),
+        _isSpamTab ? 'Spam' : _appBarTitles[_currentIndex], 
+        key: ValueKey(_isSpamTab ? 'Spam' : _currentIndex),
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w600,
             letterSpacing: -0.5,
@@ -427,7 +430,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   _buildDrawerItem(Icons.send_rounded, 'Sent', 2),
                   _buildDrawerItem(Icons.drafts_rounded, 'Drafts', 3),
                   _buildDrawerItem(Icons.delete_rounded, 'Trash', 4),
-                  _buildDrawerItem(Icons.report_gmailerrorred_rounded, 'Spam', 5),
+                  _buildDrawerItem(Icons.art_track_rounded, 'Spam', 5),
                 ]),
                 const Divider(height: 1, color: AppColors.surfaceVariant),
                 _buildDrawerSection('LABELS', [
@@ -502,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildDrawerItem(IconData icon, String title, int index) {
-    final isSelected = _currentIndex == index;
+    final isSelected = (!_isSpamTab && _currentIndex == index) || (_isSpamTab && title == 'Spam');
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
@@ -521,10 +524,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
           ),
         ),
-        onTap: () {
-          setState(() => _currentIndex = index);
+      onTap: () {
+        if (title == 'Spam') {
+          setState(() {
+            _isSpamTab = true;
+          });
+          context.read<EmailBloc>().add(ChangeTab(5)); // 5 là index spam trong bloc/repo
+        } else {
+          setState(() {
+            _currentIndex = index;
+            _isSpamTab = false;
+          });
           context.read<EmailBloc>().add(ChangeTab(index));
-          Navigator.pop(context);
+        }
+        Navigator.pop(context);
         },
       ),
     );

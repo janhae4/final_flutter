@@ -200,5 +200,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(UpdateError(e.toString()));
       }
     });
+
+    on<PasswordRecovery>((event, emit) async {
+      try {
+        final password = await repository.recoveryPassword(event.otp!);
+        emit(UpdateSuccess("Password recovery email sent successfully"));
+        emit(PasswordRecoverySuccess(password));
+      } catch (e) {
+        emit(UpdateError(e.toString()));
+      }
+    });
   }
 }

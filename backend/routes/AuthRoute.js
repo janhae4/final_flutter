@@ -9,6 +9,7 @@ router.post("/register", UserController.register);
 router.get("/profile", verifyToken, UserController.getUser);
 router.put("/profile", verifyToken, UserController.updateUser);
 router.put("/password", verifyToken, UserController.changePassword);
+router.post("/recovery-password", verifyToken, UserController.recoveryPassword);
 router.post("/generate-2fa", verifyToken, UserController.generate2FA);
 router.post("/enable-2fa", verifyToken, UserController.enable2FA);
 router.post("/verify-2fa", verifyAnyToken, UserController.verify2FA);

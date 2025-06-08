@@ -71,6 +71,37 @@ exports.login = async (username, password) => {
     }
 };
 
+const generatePassword = () => {
+    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$!';
+    let password = '';
+    for (let i = 0; i < 10; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+};
+
+exports.recoveryPassword = async (userId, otp) => {
+    const user = await User.findById(userId).select('+password +twoFactorSecret');
+    if (!user) throw new Error('User not found');
+    if (user.twoStepVerification) {
+        const verified = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: otp.trim(),
+            window: 2
+        });
+        console.log("user", user.email)
+        console.log("expected", speakeasy.totp({ secret: user.twoFactorSecret, encoding: 'base32' }));
+        if (!verified) throw new Error('Invalid 2FA code');
+    }
+    const newPassword = generatePassword();
+
+    user.password = newPassword;
+    await user.save();
+
+    return newPassword;
+};
+
 exports.setup2FA = async (userId) => {
     const user = await User.findById(userId);
     if (!user) throw new Error('User not found');

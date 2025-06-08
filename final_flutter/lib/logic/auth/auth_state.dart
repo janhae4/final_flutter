@@ -63,3 +63,8 @@ class LoadLabelsSuccess extends AuthState {
   final List<LabelModel> labels;
   LoadLabelsSuccess(this.labels);
 }
+
+class PasswordRecoverySuccess extends AuthState {
+  final String password;
+  PasswordRecoverySuccess(this.password);
+}

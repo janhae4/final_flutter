@@ -89,6 +89,17 @@ exports.changePassword = async (req, res) => {
     }
 };
 
+exports.recoveryPassword = async (req, res) => {
+    try {
+        console.log("Recovery password", req.user.id, req.body.otp);
+        
+        const password = await UserService.recoveryPassword(req.user.id, req.body.otp);
+        res.status(200).json({password});
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 exports.generate2FA = async (req, res) => {
     try {
         const user = await UserService.setup2FA(req.user.id);

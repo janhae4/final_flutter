@@ -141,7 +141,6 @@ class _InboxScreenState extends State<InboxScreen>
         return _buildEmailListView(state.emails);
       }
     } else if (state is EmailError) {
-      print(state.message);
       return _buildErrorState(state.message);
     }
     return _buildEmptyState();
@@ -212,7 +211,6 @@ class _InboxScreenState extends State<InboxScreen>
   }
 
   Widget _buildEmailListView(List<EmailResponseModel> emails) {
-    print (emails[0].labels);
     if (emails.isEmpty) {
       return _buildEmptyState();
     }

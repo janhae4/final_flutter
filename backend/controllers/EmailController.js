@@ -10,6 +10,18 @@ exports.createEmail = async (req, res) => {
     }
 };
 
+
+exports.updateEmail = async (req, res) => {
+    try {
+        const email = await EmailService.updateEmail(req.params.id, req.body);
+        if (!email) return res.status(404).json({ message: 'Email not found' });
+        console.log(email);     
+        res.json(email);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 exports.getAllEmails = async (req, res) => {
     try {
         const emails = await EmailService.getAllEmails(req.user.id);
@@ -166,6 +178,15 @@ exports.deleteLabel = async (req, res) => {
 exports.getEmailsByLabel = async (req, res) => {
     try {
         const emails = await EmailService.getEmailsByLabel(req.user.id, req.params.labelId);
+        res.json(emails);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.getEmailSpam = async (req, res) => {
+    try {
+        const emails = await EmailService.getEmailSpam(req.user.id);
         res.json(emails);
     } catch (error) {
         res.status(500).json({ message: error.message });

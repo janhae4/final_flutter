@@ -88,3 +88,8 @@ class UpdateLabel extends AuthEvent {
 }
 
 class LoadLabels extends AuthEvent {}
+
+class PasswordRecovery extends AuthEvent {
+  final String? otp;
+  PasswordRecovery(this.otp);
+}
