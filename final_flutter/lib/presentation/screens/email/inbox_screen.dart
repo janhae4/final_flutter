@@ -33,6 +33,7 @@ class _InboxScreenState extends State<InboxScreen>
   final ScrollController _scrollController = ScrollController();
   bool _showFloatingButton = false;
   String _selectedFilter = 'List';
+  late SettingsState _settingsState;
 
   @override
   bool get wantKeepAlive => true;
@@ -61,26 +62,26 @@ class _InboxScreenState extends State<InboxScreen>
   Widget build(BuildContext context) {
     return BlocBuilder<SettingsBloc, SettingsState>(
       builder: (context, settingsState) {
+        _settingsState = settingsState;
         return Scaffold(
           backgroundColor: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
           body: BlocConsumer<EmailBloc, EmailState>(
             listener: (context, state) {
               if (state is EmailError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(state.message),
-                    backgroundColor: AppColors.error,
-                  ),
-                );
+                _showErrorSnackBar(state.message);
               }
             },
             builder: (context, state) {
+              if (state is EmailLoading) {
+                return _buildSkeletonList();
+              }
               return CustomScrollView(
                 controller: _scrollController,
                 slivers: [_buildFilterChips(settingsState), _buildEmailList(state, settingsState)],
               );
             },
           ),
+          floatingActionButton: _buildFloatingActionButton(),
         );
       },
     );
@@ -780,5 +781,120 @@ class _InboxScreenState extends State<InboxScreen>
         context.read<EmailBloc>().add(RestoreEmail(email.id!));
         break;
     }
+  }
+
+  Widget _buildEmailSkeletonItem() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: _settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: _settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 200,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 150,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 10,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: _buildEmailSkeletonItem(),
+        );
+      },
+    );
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+      ),
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    return FloatingActionButton(
+      onPressed: () {
+        if (widget.tabIndex == 3) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BlocProvider.value(
+                value: context.read<EmailBloc>(),
+                child: ComposeEmailScreen(user: widget.user),
+              ),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BlocProvider.value(
+                value: context.read<EmailBloc>(),
+                child: ComposeEmailScreen(user: widget.user),
+              ),
+            ),
+          );
+        }
+      },
+      child: Icon(Icons.add),
+    );
   }
 }

@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_event.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
+import 'package:final_flutter/logic/settings/settings_bloc.dart';
+import 'package:final_flutter/logic/settings/settings_state.dart';
 import 'package:final_flutter/presentation/screens/auth/register_screen.dart';
 import 'package:final_flutter/presentation/screens/home/home_screen.dart';
 
@@ -219,406 +221,262 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(color: AppColors.surface),
-        child: SafeArea(
-          child: BlocConsumer<AuthBloc, AuthState>(
-            listener: (context, state) {
-              if (state is Authenticated) {
-                Navigator.pushReplacement(
-                  context,
-                  PageRouteBuilder(
-                    pageBuilder:
-                        (context, animation, secondaryAnimation) =>
-                            const HomeScreen(),
-                    transitionsBuilder: (
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settingsState) {
+        return Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              color: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+            ),
+            child: SafeArea(
+              child: BlocConsumer<AuthBloc, AuthState>(
+                listener: (context, state) {
+                  if (state is Authenticated) {
+                    Navigator.pushReplacement(
                       context,
-                      animation,
-                      secondaryAnimation,
-                      child,
-                    ) {
-                      return FadeTransition(opacity: animation, child: child);
-                    },
-                  ),
-                );
-              } else if (state is AuthError) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: AppColors.surface,
+                      PageRouteBuilder(
+                        pageBuilder:
+                            (context, animation, secondaryAnimation) =>
+                                const HomeScreen(),
+                        transitionsBuilder: (
+                          context,
+                          animation,
+                          secondaryAnimation,
+                          child,
+                        ) {
+                          return FadeTransition(opacity: animation, child: child);
+                        },
+                      ),
+                    );
+                  } else if (state is AuthError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: AppColors.surface,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(state.message)),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(state.message)),
-                      ],
-                    ),
-                    backgroundColor: AppColors.accent,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    margin: const EdgeInsets.all(16),
-                  ),
-                );
-              } else if (state is TwoFactorRequired) {
-                _showOtpDialog(state.tempToken);
-              }
-            },
-            builder: (context, state) {
-              return FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 60),
-
-                        // Logo và Title
-                        Hero(
-                          tag: 'app_logo',
-                          child: Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  AppColors.primary,
-                                  AppColors.primary.withAlpha(
-                                    (255 * 0.8).toInt(),
+                        backgroundColor: AppColors.accent,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        margin: const EdgeInsets.all(16),
+                      ),
+                    );
+                  } else if (state is TwoFactorRequired) {
+                    _showOtpDialog(state.tempToken);
+                  }
+                },
+                builder: (context, state) {
+                  return SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 40),
+                          FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Welcome Back!',
+                                    style: TextStyle(
+                                      fontSize: settingsState.fontSize + 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                                      fontFamily: settingsState.fontFamily,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Sign in to continue',
+                                    style: TextStyle(
+                                      fontSize: settingsState.fontSize,
+                                      color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                                      fontFamily: settingsState.fontFamily,
+                                    ),
                                   ),
                                 ],
                               ),
-                              borderRadius: BorderRadius.circular(25),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.textPrimary.withAlpha(
-                                    (255 * 0.1).toInt(),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                          FadeTransition(
+                            opacity: _fadeAnimation,
+                            child: SlideTransition(
+                              position: _slideAnimation,
+                              child: Column(
+                                children: [
+                                  _buildTextField(
+                                    controller: usernameController,
+                                    label: 'Phone Number',
+                                    prefixIcon: Icons.phone,
+                                    settingsState: settingsState,
                                   ),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.lock_person_outlined,
-                              size: 60,
-                              color: AppColors.surface,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        const Text(
-                          'Welcome Back',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryDark,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          'Sign in to continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textPrimary.withAlpha(
-                              (255 * 0.8).toInt(),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Form Container
-                        Container(
-                          padding: const EdgeInsets.all(32),
-                          constraints: const BoxConstraints(maxWidth: 600),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: AppColors.textTertiary.withAlpha(
-                                (255 * 0.1).toInt(),
-                              ),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.textPrimary.withAlpha(
-                                  (255 * 0.05).toInt(),
-                                ),
-                                blurRadius: 30,
-                                offset: const Offset(0, 15),
-                              ),
-                            ],
-                          ),
-                          child: Column(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.textTertiary.withAlpha(
-                                        (255 * 0.1).toInt(),
-                                      ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
-                                ),
-                                child: TextField(
-                                  controller: usernameController,
-                                  keyboardType: TextInputType.phone,
-                                  style: const TextStyle(fontSize: 16),
-                                  decoration: InputDecoration(
-                                    labelText: 'Phone or Email',
-                                    labelStyle: TextStyle(
-                                      color: AppColors.textTertiary.withAlpha(
-                                        (255 * 0.5).toInt(),),
-                                    ),
-                                    prefixIcon: const Icon(
-                                      Icons.person_outline,
-                                      color: AppColors.primaryLight,
-                                    ),
-                                    filled: true,
-                                    fillColor: AppColors.textTertiary.withAlpha(
-                                      (255 * 0.1).toInt(),
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.primaryLight,
-                                        width: 2,
-                                      ),
-                                    ),
+                                  const SizedBox(height: 16),
+                                  _buildTextField(
+                                    controller: passwordController,
+                                    label: 'Password',
+                                    prefixIcon: Icons.lock,
+                                    isPassword: true,
+                                    settingsState: settingsState,
                                   ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Password Field
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: AppColors.textTertiary.withAlpha(
-                                        (255 * 0.1).toInt(),
+                                  const SizedBox(height: 24),
+                                  if (state is AuthLoading)
+                                    Center(
+                                      child: CircularProgressIndicator(
+                                        color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
                                       ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
-                                ),
-                                child: TextField(
-                                  controller: passwordController,
-                                  obscureText: !_isPasswordVisible,
-                                  style: const TextStyle(fontSize: 16),
-                                  decoration: InputDecoration(
-                                    labelText: 'Password',
-                                    labelStyle: TextStyle(
-                                      color: AppColors.textTertiary.withAlpha(
-                                        (255 * 0.5).toInt(),),
-                                    ),
-                                    prefixIcon: const Icon(
-                                      Icons.lock_outline,
-                                      color: AppColors.primary,
-                                    ),
-                                    suffixIcon: IconButton(
-                                      icon: Icon(
-                                        _isPasswordVisible
-                                            ? Icons.visibility
-                                            : Icons.visibility_off,
-                                        color: AppColors.textTertiary.withAlpha(
-                                          (255 * 0.5).toInt(),
-                                        ),
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _isPasswordVisible =
-                                              !_isPasswordVisible;
-                                        });
-                                      },
-                                    ),
-                                    filled: true,
-                                    fillColor: AppColors.textTertiary.withAlpha(
-                                      (255 * 0.01).toInt(),
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.primary,
-                                        width: 2,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                    )
+                                  else
+                                    _buildLoginButton(settingsState),
+                                  const SizedBox(height: 16),
+                                  _buildRegisterButton(settingsState),
+                                ],
                               ),
-
-                              const SizedBox(height: 32),
-
-                              // Login Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 56,
-                                child:
-                                    state is AuthLoading
-                                        ? Container(
-                                          decoration: BoxDecoration(
-                                            gradient: LinearGradient(
-                                              colors: [
-                                                AppColors.primary,
-                                                AppColors.primary.withAlpha(
-                                                  (255 * 0.9).toInt(),
-                                                ),
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              28,
-                                            ),
-                                          ),
-                                          child: const Center(
-                                            child: CircularProgressIndicator(
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    AppColors.surface,
-                                                  ),
-                                            ),
-                                          ),
-                                        )
-                                        : Container(
-                                          decoration: BoxDecoration(
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                AppColors.primary,
-                                                AppColors.primaryDark,
-                                              ],
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              28,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: const Color(
-                                                  0xFF667eea,
-                                                ).withAlpha(
-                                                  (255 * 0.3).toInt(),
-                                                ),
-                                                blurRadius: 15,
-                                                offset: const Offset(0, 8),
-                                              ),
-                                            ],
-                                          ),
-                                          child: ElevatedButton(
-                                            onPressed: _onLoginPressed,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  Colors.transparent,
-                                              shadowColor: Colors.transparent,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(28),
-                                              ),
-                                            ),
-                                            child: const Text(
-                                              'Sign In',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.surface,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                              ),
-
-                              const SizedBox(height: 20),
-                            ],
+                            ),
                           ),
-                        ),
-
-                        const SizedBox(height: 32),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: TextStyle(
-                                color: AppColors.textPrimary.withAlpha(
-                                  (255 * 0.8).toInt(),
-                                ),
-                                fontSize: 16,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    pageBuilder:
-                                        (
-                                          context,
-                                          animation,
-                                          secondaryAnimation,
-                                        ) => const RegisterScreen(),
-                                    transitionsBuilder: (
-                                      context,
-                                      animation,
-                                      secondaryAnimation,
-                                      child,
-                                    ) {
-                                      return SlideTransition(
-                                        position: Tween<Offset>(
-                                          begin: const Offset(1.0, 0.0),
-                                          end: Offset.zero,
-                                        ).animate(animation),
-                                        child: child,
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                              child: const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: AppColors.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 50),
-                      ],
+                        ],
+                      ),
                     ),
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData prefixIcon,
+    bool isPassword = false,
+    required SettingsState settingsState,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        obscureText: isPassword && !_isPasswordVisible,
+        style: TextStyle(
+          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+          fontSize: settingsState.fontSize,
+          fontFamily: settingsState.fontFamily,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(
+            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            fontSize: settingsState.fontSize,
+            fontFamily: settingsState.fontFamily,
+          ),
+          prefixIcon: Icon(
+            prefixIcon,
+            color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+          ),
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                    color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
                   ),
-                ),
-              );
-            },
+                  onPressed: () {
+                    setState(() {
+                      _isPasswordVisible = !_isPasswordVisible;
+                    });
+                  },
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginButton(SettingsState settingsState) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _onLoginPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+          foregroundColor: AppColors.textOnPrimary,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+        ),
+        child: Text(
+          'Sign In',
+          style: TextStyle(
+            fontSize: settingsState.fontSize,
+            fontWeight: FontWeight.w600,
+            fontFamily: settingsState.fontFamily,
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildRegisterButton(SettingsState settingsState) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'Don\'t have an account? ',
+          style: TextStyle(
+            fontSize: settingsState.fontSize,
+            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            fontFamily: settingsState.fontFamily,
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const RegisterScreen()),
+            );
+          },
+          child: Text(
+            'Sign Up',
+            style: TextStyle(
+              fontSize: settingsState.fontSize,
+              fontWeight: FontWeight.w600,
+              color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+              fontFamily: settingsState.fontFamily,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

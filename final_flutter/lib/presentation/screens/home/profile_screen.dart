@@ -5,6 +5,8 @@ import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/logic/auth/auth_bloc.dart';
 import 'package:final_flutter/logic/auth/auth_event.dart';
 import 'package:final_flutter/logic/auth/auth_state.dart';
+import 'package:final_flutter/logic/settings/settings_bloc.dart';
+import 'package:final_flutter/logic/settings/settings_state.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:final_flutter/data/models/user_model.dart';
@@ -61,128 +63,143 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        elevation: 0,
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        centerTitle: true,
-      ),
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthError) {
-            _showErrorSnackBar(state.message);
-          }
-          if (state is UpdateProfile) {
-            setState(() {
-              user = state.user;
-            });
-            twoStepEnabled = user?.twoStepVerification ?? false;
-            nameController.text = user?.name ?? '';
-            emailController.text = user?.email ?? '';
-            phoneController.text = user?.phone ?? '';
-          }
-          if (state is UpdateError) {
-            _showErrorSnackBar(state.message);
-          }
-          if (state is UpdateSuccess) {
-            _showSuccessSnackBar(state.message);
-          }
-          if (state is QRCodeGenerated) {
-            _showTwoStepVerificationDialog(
-              context,
-              state.qrCodeUrl,
-              state.entryKey,
-            );
-          }
-          if (state is TwoFactorEnabled) {
-            setState(() {
-              twoStepEnabled = true;
-            });
-            _showBackupCodesDialog(state.backupCodes);
-          }
-          if (state is TwoFactorDisabled) {
-            setState(() {
-              twoStepEnabled = false;
-            });
-          }
-          if (state is PasswordRecoverySuccess) {
-            passwordRecoveryController.text = state.password;
-            _showPasswordRecoverySuccessDialog(context);
-          }
-        },
-        builder: (context, state) {
-          if (widget.user == null) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            );
-          }
-
-          if (user == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: AppColors.textTertiary),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Unable to load user information',
-                    style: TextStyle(fontSize: 16, color: AppColors.textPrimary),
-                  ),
-                ],
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settingsState) {
+        return Scaffold(
+          backgroundColor: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+          appBar: AppBar(
+            title: Text(
+              'Profile',
+              style: TextStyle(
+                color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                fontWeight: FontWeight.bold,
+                fontSize: settingsState.fontSize + 2,
+                fontFamily: settingsState.fontFamily,
               ),
-            );
-          }
-
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 1000;
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minHeight: MediaQuery.of(context).size.height - 100,
+            ),
+            elevation: 0,
+            backgroundColor: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+            foregroundColor: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+            centerTitle: true,
+          ),
+          body: BlocConsumer<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is AuthError) {
+                _showErrorSnackBar(state.message);
+              }
+              if (state is UpdateProfile) {
+                setState(() {
+                  user = state.user;
+                });
+                twoStepEnabled = user?.twoStepVerification ?? false;
+                nameController.text = user?.name ?? '';
+                emailController.text = user?.email ?? '';
+                phoneController.text = user?.phone ?? '';
+              }
+              if (state is UpdateError) {
+                _showErrorSnackBar(state.message);
+              }
+              if (state is UpdateSuccess) {
+                _showSuccessSnackBar(state.message);
+              }
+              if (state is QRCodeGenerated) {
+                _showTwoStepVerificationDialog(
+                  context,
+                  state.qrCodeUrl,
+                  state.entryKey,
+                );
+              }
+              if (state is TwoFactorEnabled) {
+                setState(() {
+                  twoStepEnabled = true;
+                });
+                _showBackupCodesDialog(state.backupCodes);
+              }
+              if (state is TwoFactorDisabled) {
+                setState(() {
+                  twoStepEnabled = false;
+                });
+              }
+              if (state is PasswordRecoverySuccess) {
+                passwordRecoveryController.text = state.password;
+                _showPasswordRecoverySuccessDialog(context);
+              }
+            },
+            builder: (context, state) {
+              if (widget.user == null) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
                   ),
-                  child:
-                      isWide
+                );
+              }
+
+              if (user == null) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: settingsState.isDarkMode ? AppColors.textTertiaryDark : AppColors.textTertiary,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Unable to load user information',
+                        style: TextStyle(
+                          fontSize: settingsState.fontSize,
+                          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                          fontFamily: settingsState.fontFamily,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth > 1000;
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: MediaQuery.of(context).size.height - 100,
+                      ),
+                      child: isWide
                           ? IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: 300,
+                                    child: _buildProfileSection(settingsState),
+                                  ),
+                                  SizedBox(
+                                    width: 600,
+                                    child: _buildSettingsSection(settingsState),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                SizedBox(
-                                  width: 300,
-                                  child: _buildProfileSection(),
-                                ),
-                                SizedBox(
-                                  width: 600,
-                                  child: _buildSettingsSection(),
-                                ),
+                                _buildProfileSection(settingsState),
+                                const SizedBox(height: 20),
+                                _buildSettingsSection(settingsState),
                               ],
                             ),
-                          )
-                          : Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              _buildProfileSection(),
-                              const SizedBox(height: 20),
-                              _buildSettingsSection(),
-                            ],
-                          ),
-                ),
+                    ),
+                  );
+                },
               );
             },
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -256,12 +273,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pop(context);
   }
 
-  void _showChangePasswordDialog() {
+  void _showChangePasswordDialog(BuildContext context, SettingsState settingsState) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppColors.surface,
+            backgroundColor: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -319,14 +336,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showPasswordRecoveryDialog() {
+  void _showPasswordRecoveryDialog(BuildContext context, SettingsState settingsState) {
     final emailController = TextEditingController();
 
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppColors.surface,
+            backgroundColor: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -836,12 +853,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  void _showEditProfileDialog() {
+  void _showEditProfileDialog(BuildContext context, SettingsState settingsState) {
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: AppColors.surface,
+            backgroundColor: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -1023,139 +1040,260 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildProfileSection() {
+  Widget _buildProfileSection(SettingsState settingsState) {
     return Container(
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            AppColors.primary,
-            AppColors.primaryDark.withAlpha((255 * 0.8).toInt()),
-          ],
-        ),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(12),
-          bottomLeft: Radius.circular(12),
-        ),
+        color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withAlpha((255 * 0.3).toInt()),
-            blurRadius: 15,
+            color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Stack(
-              children: [
-                Container(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 60,
+                backgroundColor: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+                backgroundImage: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
+                    ? NetworkImage('http://localhost:3000/${user!.avatarUrl!}')
+                    : null,
+                child: user?.avatarUrl == null || user!.avatarUrl!.isEmpty
+                    ? Text(
+                        user?.name?[0].toUpperCase() ?? '?',
+                        style: TextStyle(
+                          fontSize: settingsState.fontSize + 16,
+                          fontWeight: FontWeight.bold,
+                          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                          fontFamily: settingsState.fontFamily,
+                        ),
+                      )
+                    : null,
+              ),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
                   decoration: BoxDecoration(
+                    color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.surface, width: 4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.textPrimary.withAlpha((255 * 0.1).toInt()),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
                   ),
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundColor: AppColors.surface,
-                    backgroundImage:
-                        (user != null &&
-                                user?.avatarUrl != null &&
-                                user!.avatarUrl!.isNotEmpty)
-                            ? NetworkImage(
-                              'http://localhost:3000/${user!.avatarUrl!}',
-                            )
-                            : null,
-                    child:
-                        (user == null ||
-                                user!.avatarUrl == null ||
-                                user!.avatarUrl!.isEmpty)
-                            ? const Icon(
-                              Icons.person,
-                              size: 50,
-                              color: AppColors.primary,
-                            )
-                            : null,
+                  child: IconButton(
+                    icon: const Icon(Icons.camera_alt, color: AppColors.textOnPrimary),
+                    onPressed: () => _changeProfilePicture(),
                   ),
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: _changeProfilePicture,
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: AppColors.secondary,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.border,
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        color: AppColors.surface,
-                        size: 20,
-                      ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            user?.name ?? '',
+            style: TextStyle(
+              fontSize: settingsState.fontSize + 4,
+              fontWeight: FontWeight.bold,
+              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+              fontFamily: settingsState.fontFamily,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            user?.email ?? '',
+            style: TextStyle(
+              fontSize: settingsState.fontSize,
+              color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+              fontFamily: settingsState.fontFamily,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildProfileButton(
+            icon: Icons.edit,
+            text: 'Edit Profile',
+            onPressed: () => _showEditProfileDialog(context, settingsState),
+            settingsState: settingsState,
+          ),
+          const SizedBox(height: 12),
+          _buildProfileButton(
+            icon: Icons.lock,
+            text: 'Change Password',
+            onPressed: () => _showChangePasswordDialog(context, settingsState),
+            settingsState: settingsState,
+          ),
+          const SizedBox(height: 12),
+          _buildProfileButton(
+            icon: twoStepEnabled ? Icons.security : Icons.security_outlined,
+            text: twoStepEnabled ? 'Disable 2-Step' : 'Enable 2-Step',
+            onPressed: () => twoStepEnabled
+                ? _showDisableTwoStepDialog(context, settingsState)
+                : _onGenerateQrCodePressed(),
+            settingsState: settingsState,
+          ),
+          const SizedBox(height: 12),
+          _buildProfileButton(
+            icon: Icons.password,
+            text: 'Password Recovery',
+            onPressed: () => _showPasswordRecoveryDialog(context, settingsState),
+            settingsState: settingsState,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileButton({
+    required IconData icon,
+    required String text,
+    required VoidCallback onPressed,
+    required SettingsState settingsState,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        label: Text(
+          text,
+          style: TextStyle(
+            fontSize: settingsState.fontSize,
+            fontFamily: settingsState.fontFamily,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+          foregroundColor: AppColors.textOnPrimary,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsSection(SettingsState settingsState) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Account Settings',
+            style: TextStyle(
+              fontSize: settingsState.fontSize + 4,
+              fontWeight: FontWeight.bold,
+              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+              fontFamily: settingsState.fontFamily,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildSettingItem(
+            icon: Icons.person,
+            title: 'Name',
+            value: user?.name ?? '',
+            onTap: () => _showEditProfileDialog(context, settingsState),
+            settingsState: settingsState,
+          ),
+          _buildSettingItem(
+            icon: Icons.email,
+            title: 'Email',
+            value: user?.email ?? '',
+            onTap: () => _showEditProfileDialog(context, settingsState),
+            settingsState: settingsState,
+          ),
+          _buildSettingItem(
+            icon: Icons.phone,
+            title: 'Phone',
+            value: user?.phone ?? '',
+            onTap: () => _showEditProfileDialog(context, settingsState),
+            settingsState: settingsState,
+          ),
+          _buildSettingItem(
+            icon: Icons.security,
+            title: 'Two-Step Verification',
+            value: twoStepEnabled ? 'Enabled' : 'Disabled',
+            onTap: () => twoStepEnabled
+                ? _showDisableTwoStepDialog(context, settingsState)
+                : _onGenerateQrCodePressed(),
+            settingsState: settingsState,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingItem({
+    required IconData icon,
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+    required SettingsState settingsState,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: settingsState.isDarkMode ? AppColors.primaryDark.withAlpha((255 * 0.1).toInt()) : AppColors.primary.withAlpha((255 * 0.1).toInt()),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: settingsState.fontSize,
+                      fontWeight: FontWeight.w500,
+                      color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                      fontFamily: settingsState.fontFamily,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text(
-              user?.email ?? 'email@gmailcom',
-              style: const TextStyle(fontSize: 16, color: AppColors.surface),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              user?.name ?? 'User Name',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.surface,
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: settingsState.fontSize - 2,
+                      color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                      fontFamily: settingsState.fontFamily,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              user?.phone ?? 'Phone Number',
-              style: const TextStyle(fontSize: 16, color: AppColors.surfaceVariant),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _showEditProfileDialog,
-              icon: const Icon(Icons.edit, color: AppColors.primary),
-              label: const Text(
-                'Edit Profile',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.surface,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-                elevation: 0,
-              ),
+            Icon(
+              Icons.chevron_right,
+              color: settingsState.isDarkMode ? AppColors.textTertiaryDark : AppColors.textTertiary,
             ),
           ],
         ),
@@ -1163,92 +1301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSettingsSection() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.only(
-          topRight: Radius.circular(12),
-          bottomRight: Radius.circular(12),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.textPrimary.withAlpha((255 * 0.05.toInt())),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: Text(
-              'Security Settings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ),
-          _buildSettingsTile(
-            icon: Icons.lock_outline,
-            title: 'Change Password',
-            subtitle: 'Update your current password',
-            color: AppColors.primary,
-            onTap: _showChangePasswordDialog,
-          ),
-          _buildDivider(),
-          _buildSettingsTile(
-            icon: Icons.key_outlined,
-            title: 'Password Recovery',
-            subtitle: 'Send recovery link via email',
-            color: AppColors.secondary,
-            onTap: _showPasswordRecoveryDialog,
-          ),
-          _buildDivider(),
-          _buildTwoStepTile(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSettingsTile({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: color.withAlpha((255 * 0.1).toInt()),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: color, size: 24),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        color: AppColors.textTertiary,
-        size: 16,
-      ),
-      onTap: onTap,
-    );
-  }
-
-  void _showDisableTwoStepDialog(BuildContext context) {
+  void _showDisableTwoStepDialog(BuildContext context, SettingsState settingsState) {
     final otpController = TextEditingController();
     final passwordController = TextEditingController();
 
@@ -1319,57 +1372,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-    );
-  }
-
-  Widget _buildTwoStepTile() {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      leading: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: (twoStepEnabled ? AppColors.secondary : AppColors.surfaceVariant).withAlpha(
-            (255 * 0.1).toInt(),
-          ),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          Icons.security,
-          color: twoStepEnabled ? AppColors.secondary : AppColors.surfaceVariant,
-          size: 24,
-        ),
-      ),
-      title: const Text(
-        'Two-Step Verification',
-        style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-      ),
-      subtitle: Text(
-        twoStepEnabled
-            ? 'Enabled - You have added extra security to your account'
-            : 'Add extra security to your account',
-        style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
-      ),
-      trailing: Switch(
-        value: twoStepEnabled,
-        onChanged:
-            (value) => {
-              if (value)
-                _onGenerateQrCodePressed()
-              else
-                _showDisableTwoStepDialog(context),
-            },
-        activeColor: AppColors.secondary,
-        inactiveThumbColor: AppColors.surfaceVariant,
-      ),
-    );
-  }
-
-  Widget _buildDivider() {
-    return Divider(
-      height: 1,
-      color: AppColors.surfaceVariant.withAlpha((255 * 0.2).toInt()),
-      indent: 20,
-      endIndent: 20,
     );
   }
 

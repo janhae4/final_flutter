@@ -95,11 +95,12 @@ class MyApp extends StatelessWidget {
 
       // Email Bloc
       BlocProvider<EmailBloc>(
-        create:
-            (_) => EmailBloc(
-              emailRepository: emailRepository,
-              notificationBloc: notificationBloc,
-            ),
+        create: (context) => EmailBloc(
+          emailRepository: emailRepository,
+          notificationBloc: notificationBloc,
+          authBloc: BlocProvider.of<AuthBloc>(context),
+          settingsBloc: BlocProvider.of<SettingsBloc>(context),
+        ),
       ),
     ];
   }

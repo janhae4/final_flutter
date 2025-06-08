@@ -549,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     settingsState,
                   ),
                   _buildDrawerItem(
-                    Icons.art_track_rounded,
+                    Icons.dangerous_rounded,
                     'Spam',
                     5,
                     settingsState,

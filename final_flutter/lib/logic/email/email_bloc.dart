@@ -2,11 +2,14 @@ import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
 import 'package:final_flutter/data/models/email_thread.dart';
 import 'package:final_flutter/data/models/notification_model.dart';
+import 'package:final_flutter/logic/auth/auth_bloc.dart';
+import 'package:final_flutter/logic/auth/auth_state.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
 import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/logic/email/email_state.dart';
 import 'package:final_flutter/logic/notification/notification_bloc.dart';
 import 'package:final_flutter/logic/notification/notification_event.dart';
+import 'package:final_flutter/logic/settings/settings_bloc.dart';
 import 'package:final_flutter/service/notification_service.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -15,12 +18,18 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   final EmailRepository _emailRepository;
   final NotificationBloc _notificationBloc;
   final NotificationService _notificationService = NotificationService();
+  final SettingsBloc _settingsBloc;
+  final AuthBloc _authBloc;
 
   EmailBloc({
     required EmailRepository emailRepository,
     required NotificationBloc notificationBloc,
+    required SettingsBloc settingsBloc,
+    required AuthBloc authBloc
   }) : _emailRepository = emailRepository,
        _notificationBloc = notificationBloc,
+       _settingsBloc = settingsBloc,
+       _authBloc = authBloc,
        super(EmailInitial()) {
     on<EmailConnectSocket>(_onConnectSocket);
     on<LoadEmails>(_onLoadEmails);
@@ -191,8 +200,6 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
       emailId: event.email.id,
     );
 
-    print('New email received: ${event.email}');
-
     _notificationBloc.add(
       AddNotification(
         NotificationItem(
@@ -206,6 +213,33 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
         ),
       ),
     );
+
+    // AUTO ANSWER LOGIC
+    final settingsState = _settingsBloc.state;
+    if (settingsState.autoAnswerEnabled && event.email.sender != null) {
+      // Lấy email người dùng hiện tại
+      String? myEmail;
+      final authState = _authBloc.state;
+      if (authState is LoadProfileSuccess) {
+        myEmail = authState.user.email;
+      }
+      if (myEmail != null) {
+        final autoAnswerEmail = Email(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          sender: myEmail,
+          to: [event.email.sender!],
+          cc: [],
+          bcc: [],
+          subject: 'Re: ${event.email.subject ?? ''}',
+          content: [settingsState.autoAnswerContent],
+          plainTextContent: settingsState.autoAnswerContent,
+          time: DateTime.now(),
+          attachments: [],
+          labels: [],
+        );
+        await _emailRepository.sendEmail(autoAnswerEmail);
+      }
+    }
 
     if (currentState is EmailLoaded && currentState.currentTab == 0) {
       final updatedList = [event.email, ...currentState.emails];
