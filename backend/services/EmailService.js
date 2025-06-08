@@ -69,9 +69,9 @@ exports.createEmail = async (userId, data) => {
     return newEmail;
 }
 
-exports.updateEmail = async (id, data) => Email.findByIdAndUpdate(id, data, { new: true }).select('+receiverIds +bcc +cc +content +attachments +isReplied +isForwarded +originalEmailId +starred +isDraft +isInTrash +isSpam');
+exports.updateEmail = async (id, data) => await Email.findByIdAndUpdate(id, data, { new: true }).select('+receiverIds +bcc +cc +content +attachments +isReplied +isForwarded +originalEmailId +starred +isDraft +isInTrash +isSpam');
 
-exports.getAllEmails = async (id) =>
+exports.getAllEmails = async (id) => await
     Email.find({
         $and: [
             {
@@ -110,13 +110,13 @@ exports.getEmailById = async (id) => {
         thread: threadEmails,
     };
 };
-exports.updateEmail = async (id, data) => Email.findByIdAndUpdate(id, data, { new: true });
+exports.updateEmail = async (id, data) => await Email.findByIdAndUpdate(id, data, { new: true });
 
-exports.deleteEmail = async (id) => Email.findByIdAndDelete(id);
+exports.deleteEmail = async (id) => await Email.findByIdAndDelete(id);
 
-exports.getSentEmails = async (userId) => Email.find({ senderId: userId }).sort({ createdAt: -1 });
+exports.getSentEmails = async (userId) => await Email.find({ senderId: userId }).sort({ createdAt: -1 });
 
-exports.getStarredEmails = async (userId) => Email.find({
+exports.getStarredEmails = async (userId) => await Email.find({
     $and: [
         {
             $or: [
@@ -128,11 +128,11 @@ exports.getStarredEmails = async (userId) => Email.find({
     ]
 }).sort({ createdAt: -1 });
 
-exports.getDrafts = async (userId) => Email.find({ senderId: userId, isDraft: true }).sort({ createdAt: -1 });
+exports.getDrafts = async (userId) => await Email.find({ senderId: userId, isDraft: true }).sort({ createdAt: -1 });
 
-exports.getTrash = async (userId) => Email.find({ senderId: userId, isInTrash: true }).sort({ createdAt: -1 });
+exports.getTrash = async (userId) => await Email.find({ senderId: userId, isInTrash: true }).sort({ createdAt: -1 });
 
-exports.getSpam = async (userId) => Email.find({ senderId: userId, isSpam: true }).sort({ createdAt: -1 });
+exports.getSpam = async (userId) => await Email.find({ senderId: userId, isSpam: true }).sort({ createdAt: -1 });
 
 exports.toggleStar = async (id) => {
     const email = await Email.findById(id);
@@ -147,9 +147,9 @@ exports.markRead = async (id) => {
     return await email.save();
 }
 
-exports.moveToTrash = async (id) => Email.findByIdAndUpdate(id, { isInTrash: true, starred: false }, { new: true });
+exports.moveToTrash = async (id) => await Email.findByIdAndUpdate(id, { isInTrash: true, starred: false }, { new: true });
 
-exports.restoreEmail = async (id) => Email.findByIdAndUpdate(id, { isInTrash: false }, { new: true });
+exports.restoreEmail = async (id) => await Email.findByIdAndUpdate(id, { isInTrash: false }, { new: true });
 
 exports.searchEmails = async (userId, query) => {
     const escapeRegex = str => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
@@ -178,7 +178,7 @@ exports.searchEmails = async (userId, query) => {
 
 exports.advancedSearch = async (userId, req) => {
     console.log("Advanced Search Query:", req);
-    const { from, to, subject, keywords, hasAttachment, fromDate, toDate, hasAttachments } = req.query;
+    const { from, to, subject, keywords, fromDate, toDate, hasAttachments } = req.query;
     const query = {
         $and: [
             { isInTrash: false },
@@ -246,7 +246,7 @@ exports.removeLabelFromEmail = async (emailId, label) => {
     return await email.save();
 }
 
-exports.getEmailLabels = async (userId, labelId) => Email.find({
+exports.getEmailLabels = async (userId, labelId) => await Email.find({
     $and: [
         {
             $or: [
@@ -261,4 +261,4 @@ exports.getEmailLabels = async (userId, labelId) => Email.find({
     .sort({ createdAt: -1 })
     .select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
 
-exports.getEmailSpam = async (userId) => Email.find({ [$or]: [{ senderId: userId }, { receiverIds: userId }], isSpam: true }).sort({ createdAt: -1 }).select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
+exports.getEmailSpam = async (userId) => await Email.find({ [$or]: [{ senderId: userId }, { receiverIds: userId }], isSpam: true }).sort({ createdAt: -1 }).select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
