@@ -72,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         centerTitle: true,
       ),
@@ -131,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+                  Icon(Icons.error_outline, size: 64, color: AppColors.textTertiary),
                   const SizedBox(height: 16),
                   const Text(
                     'Unable to load user information',
@@ -261,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -311,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: const Text(
                   'Change Password',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.surface),
                 ),
               ),
             ],
@@ -326,7 +326,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -370,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: const Text(
                   'Send',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.surface),
                 ),
               ),
             ],
@@ -390,7 +390,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -435,7 +435,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: const Text(
                   'Save',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.surface),
                 ),
               ),
             ],
@@ -457,7 +457,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           (dialogContext) => StatefulBuilder(
             builder:
                 (context, setDialogState) => AlertDialog(
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.surface,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -492,7 +492,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Center(
                             child: Container(
                               padding: const EdgeInsets.all(8),
-                              color: Colors.white,
+                              color: AppColors.surface,
                               child: Image.memory(
                                 qrBytes,
                                 width: 200,
@@ -515,7 +515,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   );
                                   _showCopyNotification(
                                     rootContext,
-                                    Colors.green,
+                                    AppColors.success,
                                     'Copied!',
                                   );
                                 },
@@ -565,7 +565,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: const Text(
                         'Verify',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: AppColors.surface),
                       ),
                     ),
                   ],
@@ -613,7 +613,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.white,
+                      AppColors.surface,
                       AppColors.primary.withAlpha((255 * 0.8).toInt()),
                     ],
                   ),
@@ -630,7 +630,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
@@ -756,10 +756,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () => Navigator.of(context).pop(),
-                            icon: const Icon(Icons.check, color: Colors.white),
+                            icon: const Icon(Icons.check, color: AppColors.surface),
                             label: const Text(
                               'Saved',
-                              style: TextStyle(color: Colors.white),
+                              style: TextStyle(color: AppColors.surface),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
@@ -782,7 +782,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 right: 8,
                 top: 8,
                 child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: const Icon(Icons.close, color: AppColors.surface),
                   onPressed: () => Navigator.of(context).pop(),
                   tooltip: 'Close',
                 ),
@@ -821,7 +821,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Text(
                   message.trim(),
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.surface),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -841,7 +841,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder:
           (context) => AlertDialog(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -887,7 +887,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: const Text(
                   'Update',
-                  style: TextStyle(color: Colors.white),
+                  style: TextStyle(color: AppColors.surface),
                 ),
               ),
             ],
@@ -898,7 +898,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _changeProfilePicture() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -912,7 +912,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: AppColors.surfaceVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1013,11 +1013,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-            color: Colors.grey.withAlpha((255 * 0.3).toInt()),
+            color: AppColors.surfaceVariant.withAlpha((255 * 0.3).toInt()),
           ),
         ),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.surface,
         suffixText: label == 'Email' ? '@gmail.com' : null,
       ),
     );
@@ -1055,10 +1055,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 4),
+                    border: Border.all(color: AppColors.surface, width: 4),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha((255 * 0.1).toInt()),
+                        color: AppColors.textPrimary.withAlpha((255 * 0.1).toInt()),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -1066,7 +1066,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.white,
+                    backgroundColor: AppColors.surface,
                     backgroundImage:
                         (user != null &&
                                 user?.avatarUrl != null &&
@@ -1099,7 +1099,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black26,
+                            color: AppColors.border,
                             blurRadius: 4,
                             offset: Offset(0, 2),
                           ),
@@ -1107,7 +1107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: const Icon(
                         Icons.camera_alt,
-                        color: Colors.white,
+                        color: AppColors.surface,
                         size: 20,
                       ),
                     ),
@@ -1118,7 +1118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 20),
             Text(
               user?.email ?? 'email@gmailcom',
-              style: const TextStyle(fontSize: 16, color: Colors.white),
+              style: const TextStyle(fontSize: 16, color: AppColors.surface),
             ),
             const SizedBox(height: 10),
             Text(
@@ -1126,13 +1126,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: AppColors.surface,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               user?.phone ?? 'Phone Number',
-              style: const TextStyle(fontSize: 16, color: Colors.white70),
+              style: const TextStyle(fontSize: 16, color: AppColors.surfaceVariant),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -1146,7 +1146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
+                backgroundColor: AppColors.surface,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -1166,14 +1166,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildSettingsSection() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.only(
           topRight: Radius.circular(12),
           bottomRight: Radius.circular(12),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha((255 * 0.05.toInt())),
+            color: AppColors.textPrimary.withAlpha((255 * 0.05.toInt())),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -1241,7 +1241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       trailing: Icon(
         Icons.arrow_forward_ios,
-        color: Colors.grey[400],
+        color: AppColors.textTertiary,
         size: 16,
       ),
       onTap: onTap,
@@ -1271,7 +1271,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   const Text(
                     'To disable 2FA, please enter your current 6-digit code from the authenticator app and your account password.',
-                    style: TextStyle(color: Colors.grey),
+                    style: TextStyle(color: AppColors.surfaceVariant),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -1310,7 +1310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   } else {
                     _showCopyNotification(
                       context,
-                      Colors.red,
+                      AppColors.accentDark,
                       'Invalid OTP or password.',
                     );
                   }
@@ -1328,14 +1328,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: (twoStepEnabled ? AppColors.secondary : Colors.grey).withAlpha(
+          color: (twoStepEnabled ? AppColors.secondary : AppColors.surfaceVariant).withAlpha(
             (255 * 0.1).toInt(),
           ),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           Icons.security,
-          color: twoStepEnabled ? AppColors.secondary : Colors.grey,
+          color: twoStepEnabled ? AppColors.secondary : AppColors.surfaceVariant,
           size: 24,
         ),
       ),
@@ -1359,7 +1359,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _showDisableTwoStepDialog(context),
             },
         activeColor: AppColors.secondary,
-        inactiveThumbColor: Colors.grey,
+        inactiveThumbColor: AppColors.surfaceVariant,
       ),
     );
   }
@@ -1367,7 +1367,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildDivider() {
     return Divider(
       height: 1,
-      color: Colors.grey.withAlpha((255 * 0.2).toInt()),
+      color: AppColors.surfaceVariant.withAlpha((255 * 0.2).toInt()),
       indent: 20,
       endIndent: 20,
     );

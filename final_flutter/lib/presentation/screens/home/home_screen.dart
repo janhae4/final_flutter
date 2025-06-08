@@ -9,9 +9,12 @@ import 'package:final_flutter/logic/email/email_state.dart';
 import 'package:final_flutter/logic/notification/notfication_state.dart';
 import 'package:final_flutter/logic/notification/notification_bloc.dart';
 import 'package:final_flutter/logic/notification/notification_event.dart';
+import 'package:final_flutter/logic/settings/settings_bloc.dart';
+import 'package:final_flutter/logic/settings/settings_state.dart';
 import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
 import 'package:final_flutter/presentation/screens/email/inbox_screen.dart';
 import 'package:final_flutter/presentation/screens/home/profile_screen.dart';
+import 'package:final_flutter/presentation/screens/home/settings_screen.dart';
 import 'package:final_flutter/service/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -84,109 +87,131 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: _buildAppBar(context),
-      floatingActionButton: _buildFAB(context),
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: _buildBottomNav(context),
-      drawer: _buildDrawer(context),
-      body: BlocConsumer<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is LoadProfileSuccess) {
-            setState(() {
-              _user = state.user;
-              _labels = _user?.labels ?? [];
-            });
-          } else if (state is Unauthenticated) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-            );
-          }
-          if (state is LoadLabelsSuccess) {
-            setState(() {
-              _user = _user?.copyWith(labels: state.labels);
-              _labels = state.labels;
-            });
-          }
-        },
-        builder: (context, state) {
-          if (_user == null) {
-            return _buildLoadingState();
-          }
-          return BlocListener<EmailBloc, EmailState>(
-            listener: (context, emailState) {
-              if (emailState is EmailError) {
-                _showSnackBar(context, emailState.message, isError: true);
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      builder: (context, settingsState) {
+        return Scaffold(
+          backgroundColor:
+              settingsState.isDarkMode
+                  ? AppColors.backgroundDark
+                  : AppColors.background,
+          appBar: _buildAppBar(context, settingsState),
+          floatingActionButton: _buildFAB(context, settingsState),
+          floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+          bottomNavigationBar: _buildBottomNav(context, settingsState),
+          drawer: _buildDrawer(context, settingsState),
+          body: BlocConsumer<AuthBloc, AuthState>(
+            listener: (context, state) {
+              if (state is LoadProfileSuccess) {
+                setState(() {
+                  _user = state.user;
+                  _labels = _user?.labels ?? [];
+                });
+              } else if (state is Unauthenticated) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                );
               }
-              if (emailState is EmailLoading) {
-                _buildLoadingState();
+              if (state is LoadLabelsSuccess) {
+                setState(() {
+                  _user = _user?.copyWith(labels: state.labels);
+                  _labels = state.labels;
+                });
               }
             },
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.1, 0),
-                      end: Offset.zero,
-                    ).animate(
-                      CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeInOut,
+            builder: (context, state) {
+              if (_user == null) {
+                return _buildLoadingState(context, settingsState);
+              }
+              return BlocListener<EmailBloc, EmailState>(
+                listener: (context, emailState) {
+                  if (emailState is EmailError) {
+                    _showSnackBar(context, emailState.message, isError: true);
+                  }
+                  if (emailState is EmailLoading) {
+                    _buildLoadingState(context, settingsState);
+                  }
+                },
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.1, 0),
+                          end: Offset.zero,
+                        ).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeInOut,
+                          ),
+                        ),
+                        child: child,
                       ),
-                    ),
-                    child: child,
+                    );
+                  },
+                  child: InboxScreen(
+                    key: Key('inbox-screen-$_currentIndex'),
+                    user: _user!,
+                    tabIndex: _currentIndex,
+                    labels: _labels ?? [],
                   ),
-                );
-              },
-              child: InboxScreen(
-                key: Key('inbox-screen-$_currentIndex'),
-                user: _user!,
-                tabIndex: _currentIndex,
-                labels: _labels ?? [],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(
+    BuildContext context,
+    SettingsState settingsState,
+  ) {
     return AppBar(
       elevation: 0,
       scrolledUnderElevation: 2,
-      backgroundColor: AppColors.surface,
-      foregroundColor: AppColors.textPrimary,
+      backgroundColor:
+          settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+      foregroundColor:
+          settingsState.isDarkMode
+              ? AppColors.textPrimaryDark
+              : AppColors.textPrimary,
       surfaceTintColor: AppColors.surfaceVariant,
       title: AnimatedSwitcher(
         duration: const Duration(milliseconds: 200),
         child: Text(
           _appBarTitles[_currentIndex],
           key: ValueKey(_currentIndex),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          style: TextStyle(
+            fontSize: settingsState.fontSize + 2,
+            fontFamily: settingsState.fontFamily,
             fontWeight: FontWeight.w600,
             letterSpacing: -0.5,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimary,
           ),
         ),
       ),
       actions: [
         _buildAppBarAction(
           icon: Icons.search_rounded,
-          onPressed: () => _showSearchDialog(context),
+          onPressed: () => _showSearchDialog(context, settingsState),
           tooltip: 'Search emails',
+          settingsState: settingsState,
         ),
         _buildAppBarAction(
           icon: Icons.refresh_rounded,
           onPressed: () => _refreshEmails(context),
           tooltip: 'Refresh',
+          settingsState: settingsState,
         ),
-        _buildNotificationButton(context),
-        _buildPopupMenu(context),
+        _buildNotificationButton(context, settingsState),
+        _buildPopupMenu(context, settingsState),
         const SizedBox(width: 8),
       ],
     );
@@ -196,13 +221,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     required IconData icon,
     required VoidCallback onPressed,
     required String tooltip,
+    required SettingsState settingsState,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       child: IconButton.filled(
         style: IconButton.styleFrom(
           backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -214,7 +243,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildNotificationButton(BuildContext context) {
+  Widget _buildNotificationButton(
+    BuildContext context,
+    SettingsState settingsState,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       child: BlocBuilder<NotificationBloc, NotificationState>(
@@ -223,9 +255,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             showBadge: state.unreadCount > 0,
             badgeContent: Text(
               '${state.unreadCount}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
+              style: TextStyle(
+                color: AppColors.surface,
+                fontSize: settingsState.fontSize - 4,
+                fontFamily: settingsState.fontFamily,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -240,7 +273,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: IconButton.filled(
               style: IconButton.styleFrom(
                 backgroundColor: Colors.transparent,
-                foregroundColor: AppColors.textPrimary,
+                foregroundColor:
+                    settingsState.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -248,7 +284,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               icon: const Icon(Icons.notifications_rounded, size: 22),
               onPressed: () {
                 context.read<NotificationBloc>().add(MarkAllAsRead());
-                _showNotificationList(context);
+                _showNotificationList(context, settingsState);
               },
               tooltip: 'Notifications',
             ),
@@ -258,13 +294,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildPopupMenu(BuildContext context) {
+  Widget _buildPopupMenu(BuildContext context, SettingsState settingsState) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       child: PopupMenuButton<String>(
         style: IconButton.styleFrom(
           backgroundColor: Colors.transparent,
-          foregroundColor: AppColors.textPrimary,
+          foregroundColor:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -292,13 +331,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
         itemBuilder: (BuildContext context) {
           return [
-            _buildPopupMenuItem(Icons.person_rounded, 'Profile', 'profile'),
-            _buildPopupMenuItem(Icons.settings_rounded, 'Settings', 'settings'),
+            _buildPopupMenuItem(
+              Icons.person_rounded,
+              'Profile',
+              'profile',
+              settingsState: settingsState,
+            ),
+            _buildPopupMenuItem(
+              Icons.settings_rounded,
+              'Settings',
+              'settings',
+              settingsState: settingsState,
+            ),
             const PopupMenuDivider(),
             _buildPopupMenuItem(
               Icons.logout_rounded,
               'Logout',
               'logout',
+              settingsState: settingsState,
               isDestructive: true,
             ),
           ];
@@ -311,6 +361,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     IconData icon,
     String title,
     String value, {
+    required SettingsState settingsState,
     bool isDestructive = false,
   }) {
     return PopupMenuItem<String>(
@@ -322,8 +373,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Text(
             title,
             style: TextStyle(
-              color: isDestructive ? AppColors.error : null,
+              color:
+                  isDestructive
+                      ? AppColors.error
+                      : (settingsState.isDarkMode
+                          ? AppColors.textPrimaryDark
+                          : AppColors.textPrimary),
               fontWeight: FontWeight.w500,
+              fontSize: settingsState.fontSize,
+              fontFamily: settingsState.fontFamily,
             ),
           ),
         ],
@@ -331,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildFAB(BuildContext context) {
+  Widget _buildFAB(BuildContext context, SettingsState settingsState) {
     return FloatingActionButton.extended(
       onPressed: () => _navigateToCompose(context),
       backgroundColor: AppColors.primary,
@@ -340,20 +398,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       extendedPadding: const EdgeInsets.symmetric(horizontal: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       icon: const Icon(Icons.edit_rounded, size: 20),
-      label: const Text(
+      label: Text(
         'Compose',
-        style: TextStyle(fontWeight: FontWeight.w600, letterSpacing: 0.5),
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+          fontSize: settingsState.fontSize,
+          fontFamily: settingsState.fontFamily,
+        ),
       ),
     );
   }
 
-  Widget _buildBottomNav(BuildContext context) {
+  Widget _buildBottomNav(BuildContext context, SettingsState settingsState) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.surfaceDark
+                : AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).shadowColor.withAlpha((255 * 0.1).toInt()),
+            color: (settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimary)
+                .withAlpha((255 * 0.1).toInt()),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -375,22 +444,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Icons.inbox_rounded,
             Icons.inbox_outlined,
             'Inbox',
+            settingsState,
           ),
           _buildNavDestination(
             Icons.star_rounded,
             Icons.star_outline_rounded,
             'Starred',
+            settingsState,
           ),
-          _buildNavDestination(Icons.send_rounded, Icons.send_outlined, 'Sent'),
+          _buildNavDestination(
+            Icons.send_rounded,
+            Icons.send_outlined,
+            'Sent',
+            settingsState,
+          ),
           _buildNavDestination(
             Icons.drafts_rounded,
             Icons.drafts_outlined,
             'Drafts',
+            settingsState,
           ),
           _buildNavDestination(
             Icons.delete_rounded,
             Icons.delete_outline_rounded,
             'Trash',
+            settingsState,
           ),
         ],
       ),
@@ -401,41 +479,89 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     IconData selectedIcon,
     IconData unselectedIcon,
     String label,
+    SettingsState settingsState,
   ) {
     return NavigationDestination(
-      selectedIcon: Icon(selectedIcon, size: 24),
-      icon: Icon(unselectedIcon, size: 24),
+      selectedIcon: Icon(
+        selectedIcon,
+        size: 24,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.textPrimaryDark
+                : AppColors.textPrimary,
+      ),
+      icon: Icon(
+        unselectedIcon,
+        size: 24,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.textSecondaryDark
+                : AppColors.textSecondary,
+      ),
       label: label,
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
+  Widget _buildDrawer(BuildContext context, SettingsState settingsState) {
     return Drawer(
-      backgroundColor: AppColors.surface,
+      backgroundColor:
+          settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
       elevation: 16,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.horizontal(right: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          _buildDrawerHeader(context),
+          _buildDrawerHeader(context, settingsState),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               children: [
-                _buildDrawerSection('FOLDERS', [
-                  _buildDrawerItem(Icons.inbox_rounded, 'Inbox', 0),
-                  _buildDrawerItem(Icons.star_rounded, 'Starred', 1),
-                  _buildDrawerItem(Icons.send_rounded, 'Sent', 2),
-                  _buildDrawerItem(Icons.drafts_rounded, 'Drafts', 3),
-                  _buildDrawerItem(Icons.delete_rounded, 'Trash', 4),
-                  _buildDrawerItem(Icons.art_track_rounded, 'Spam', 5),
+                _buildDrawerSection('FOLDERS', settingsState, [
+                  _buildDrawerItem(
+                    Icons.inbox_rounded,
+                    'Inbox',
+                    0,
+                    settingsState,
+                  ),
+                  _buildDrawerItem(
+                    Icons.star_rounded,
+                    'Starred',
+                    1,
+                    settingsState,
+                  ),
+                  _buildDrawerItem(
+                    Icons.send_rounded,
+                    'Sent',
+                    2,
+                    settingsState,
+                  ),
+                  _buildDrawerItem(
+                    Icons.drafts_rounded,
+                    'Drafts',
+                    3,
+                    settingsState,
+                  ),
+                  _buildDrawerItem(
+                    Icons.delete_rounded,
+                    'Trash',
+                    4,
+                    settingsState,
+                  ),
+                  _buildDrawerItem(
+                    Icons.art_track_rounded,
+                    'Spam',
+                    5,
+                    settingsState,
+                  ),
                 ]),
                 const Divider(height: 1, color: AppColors.surfaceVariant),
-                _buildDrawerSection('LABELS', [
+                _buildDrawerSection('LABELS', settingsState, [
                   if (_labels != null)
-                    ..._labels!.map((label) => _buildLabelItem(context, label)),
-                  _buildCreateLabelItem(context),
+                    ..._labels!.map(
+                      (label) => _buildLabelItem(context, label, settingsState),
+                    ),
+                  _buildCreateLabelItem(context, settingsState),
                 ]),
               ],
             ),
@@ -445,7 +571,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildDrawerHeader(BuildContext context) {
+  Widget _buildDrawerHeader(BuildContext context, SettingsState settingsState) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 48, 16, 16),
       constraints: const BoxConstraints(
@@ -457,8 +583,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppColors.primary,
-            AppColors.primaryDark.withAlpha((255 * 0.8).toInt()),
+            settingsState.isDarkMode
+                ? AppColors.primaryDark
+                : AppColors.primary,
+            settingsState.isDarkMode
+                ? AppColors.primaryDark.withAlpha((255 * 0.8).toInt())
+                : AppColors.primary.withAlpha((255 * 0.8).toInt()),
           ],
         ),
       ),
@@ -467,6 +597,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           CircleAvatar(
             radius: 30,
+            backgroundColor:
+                settingsState.isDarkMode
+                    ? AppColors.surfaceDark
+                    : AppColors.surface,
             backgroundImage: NetworkImage(
               'http://localhost:3000/${_user?.avatarUrl}',
             ),
@@ -474,15 +608,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           const SizedBox(height: 10),
           Text(
             _user?.name ?? '',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            style: TextStyle(
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.surface,
+              fontSize: settingsState.fontSize + 2,
+              fontFamily: settingsState.fontFamily,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          Text(_user?.email ?? '', style: const TextStyle(color: Colors.white)),
+          Text(
+            _user?.email ?? '',
+            style: TextStyle(
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textSecondaryDark
+                      : AppColors.surface.withOpacity(0.8),
+              fontSize: settingsState.fontSize - 2,
+              fontFamily: settingsState.fontFamily,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildDrawerSection(String title, List<Widget> children) {
+  Widget _buildDrawerSection(
+    String title,
+    SettingsState settingsState,
+    List<Widget> children,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -491,9 +647,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: Text(
             title,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: settingsState.fontSize - 4,
+              fontFamily: settingsState.fontFamily,
               fontWeight: FontWeight.w600,
-              color: AppColors.surface.withAlpha((255 * 0.6).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
@@ -503,24 +663,54 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildDrawerItem(IconData icon, String title, int index) {
+  Widget _buildDrawerItem(
+    IconData icon,
+    String title,
+    int index,
+    SettingsState settingsState,
+  ) {
     final isSelected = _currentIndex == index;
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       child: ListTile(
         selected: isSelected,
-        selectedTileColor: Theme.of(
-          context,
-        ).colorScheme.primary.withAlpha((255 * 0.08).toInt()),
-        selectedColor: AppColors.primary,
+        selectedTileColor:
+            settingsState.isDarkMode
+                ? AppColors.primaryDark.withAlpha((255 * 0.08).toInt())
+                : AppColors.primary.withAlpha((255 * 0.08).toInt()),
+        selectedColor:
+            settingsState.isDarkMode
+                ? AppColors.primaryDark
+                : AppColors.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Icon(icon, size: 22),
+        leading: Icon(
+          icon,
+          size: 22,
+          color:
+              isSelected
+                  ? (settingsState.isDarkMode
+                      ? AppColors.primaryDark
+                      : AppColors.primary)
+                  : (settingsState.isDarkMode
+                      ? AppColors.textSecondaryDark
+                      : AppColors.textSecondary),
+        ),
         title: Text(
           title,
           style: TextStyle(
+            fontSize: settingsState.fontSize,
+            fontFamily: settingsState.fontFamily,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color:
+                isSelected
+                    ? (settingsState.isDarkMode
+                        ? AppColors.primaryDark
+                        : AppColors.primary)
+                    : (settingsState.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary),
           ),
         ),
         onTap: () {
@@ -532,7 +722,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildLabelItem(BuildContext context, label) {
+  Widget _buildLabelItem(
+    BuildContext context,
+    LabelModel label,
+    SettingsState settingsState,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       child: ListTile(
@@ -542,19 +736,33 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           width: 8,
           height: 8,
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.primaryDark
+                    : AppColors.primary,
             shape: BoxShape.circle,
           ),
         ),
         title: Text(
           label.label,
-          style: const TextStyle(fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: settingsState.fontSize,
+            fontFamily: settingsState.fontFamily,
+            fontWeight: FontWeight.w500,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimary,
+          ),
         ),
         trailing: PopupMenuButton<String>(
           icon: Icon(
             Icons.more_horiz_rounded,
             size: 18,
-            color: AppColors.surface.withAlpha((255 * 0.6).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -571,10 +779,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 PopupMenuItem(
                   value: 'edit',
                   child: Row(
-                    children: const [
-                      Icon(Icons.edit_rounded, size: 18),
-                      SizedBox(width: 12),
-                      Text('Edit'),
+                    children: [
+                      Icon(
+                        Icons.edit_rounded,
+                        size: 18,
+                        color:
+                            settingsState.isDarkMode
+                                ? AppColors.textPrimaryDark
+                                : AppColors.textPrimary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontSize: settingsState.fontSize,
+                          fontFamily: settingsState.fontFamily,
+                          color:
+                              settingsState.isDarkMode
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.textPrimary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -588,7 +813,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         color: AppColors.error,
                       ),
                       const SizedBox(width: 12),
-                      Text('Delete', style: TextStyle(color: AppColors.error)),
+                      Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: settingsState.fontSize,
+                          fontFamily: settingsState.fontFamily,
+                          color: AppColors.error,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -602,7 +834,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildCreateLabelItem(BuildContext context) {
+  Widget _buildCreateLabelItem(
+    BuildContext context,
+    SettingsState settingsState,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       child: ListTile(
@@ -611,16 +846,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         leading: Container(
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
-            color: AppColors.primary.withAlpha((255 * 0.1).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.primaryDark.withAlpha((255 * 0.1).toInt())
+                    : AppColors.primary.withAlpha((255 * 0.1).toInt()),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.add_rounded, size: 18, color: AppColors.primary),
+          child: Icon(
+            Icons.add_rounded,
+            size: 18,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.primaryDark
+                    : AppColors.primary,
+          ),
         ),
         title: Text(
           'Create new label',
           style: TextStyle(
+            fontSize: settingsState.fontSize,
+            fontFamily: settingsState.fontFamily,
             fontWeight: FontWeight.w500,
-            color: AppColors.primary,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.primaryDark
+                    : AppColors.primary,
           ),
         ),
         onTap: () => _createNewLabel(context),
@@ -628,7 +878,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildLoadingState() {
+  Widget _buildLoadingState(BuildContext context, SettingsState settingsState) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -647,8 +897,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           const SizedBox(height: 24),
           Text(
             'Loading your emails...',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.surface.withAlpha((255 * 0.7).toInt()),
+            style: TextStyle(
+              fontSize: settingsState.fontSize,
+              fontFamily: settingsState.fontFamily,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimary,
             ),
           ),
         ],
@@ -667,14 +922,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           children: [
             Icon(
               isError ? Icons.error_rounded : Icons.check_circle_rounded,
-              color: Colors.white,
+              color: AppColors.surface,
               size: 20,
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 message,
-                style: const TextStyle(fontWeight: FontWeight.w500),
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: context.read<SettingsBloc>().state.fontSize,
+                  fontFamily: context.read<SettingsBloc>().state.fontFamily,
+                ),
               ),
             ),
           ],
@@ -689,7 +948,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _showNotificationList(BuildContext rootContext) {
+  void _showNotificationList(
+    BuildContext rootContext,
+    SettingsState settingsState,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -702,7 +964,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           builder: (context, scrollController) {
             return Container(
               decoration: const BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
@@ -713,7 +975,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: AppColors.textTertiary,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -728,7 +990,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         const Spacer(),
@@ -738,7 +1000,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           },
                           child: const Text(
                             'Mark all as read',
-                            style: TextStyle(color: Colors.blue, fontSize: 14),
+                            style: TextStyle(
+                              color: AppColors.info,
+                              fontSize: 14,
+                            ),
                           ),
                         ),
                       ],
@@ -760,14 +1025,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 Icon(
                                   Icons.notifications_none,
                                   size: 64,
-                                  color: Colors.grey,
+                                  color: AppColors.textTertiary,
                                 ),
                                 SizedBox(height: 16),
                                 Text(
                                   'No notifications',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: Colors.grey,
+                                    color: AppColors.textTertiary,
                                   ),
                                 ),
                               ],
@@ -834,14 +1099,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   fontSize: 15,
                   fontWeight:
                       notification.isRead ? FontWeight.normal : FontWeight.w600,
-                  color: Colors.black87,
+                  color: AppColors.textPrimary,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Text(
               timeago.format(notification.time),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
             ),
           ],
         ),
@@ -851,7 +1116,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             notification.subject,
             style: TextStyle(
               fontSize: 13,
-              color: Colors.grey[700],
+              color: AppColors.textTertiary,
               height: 1.3,
             ),
             maxLines: 1,
@@ -864,7 +1129,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   width: 8,
                   height: 8,
                   decoration: const BoxDecoration(
-                    color: Colors.blue,
+                    color: AppColors.info,
                     shape: BoxShape.circle,
                   ),
                 )
@@ -883,10 +1148,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _navigateToSettings(BuildContext context) {
-    // Navigator.push(
-    //   context,
-    //   MaterialPageRoute(builder: (context) => const SettingsScreen()),
-    // );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+    );
   }
 
   void _navigateToProfile(BuildContext context) {
@@ -903,7 +1168,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _showSearchDialog(BuildContext context) {
+  void _showSearchDialog(BuildContext context, SettingsState settingsState) {
     showDialog(
       context: context,
       builder: (context) {
@@ -923,7 +1188,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  _showAdvancedSearch(context);
+                  _showAdvancedSearch(context, settingsState);
                 },
                 child: const Text('Advanced Search'),
               ),
@@ -949,7 +1214,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _showAdvancedSearch(BuildContext context) {
+  void _showAdvancedSearch(BuildContext context, SettingsState settingsState) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
