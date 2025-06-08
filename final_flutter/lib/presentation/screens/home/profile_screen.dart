@@ -1063,7 +1063,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 radius: 60,
                 backgroundColor: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
                 backgroundImage: user?.avatarUrl != null && user!.avatarUrl!.isNotEmpty
-                    ? NetworkImage('http://localhost:3000/${user!.avatarUrl!}')
+                    ? NetworkImage('https://final-flutter.onrender.com/${user!.avatarUrl!}')
                     : null,
                 child: user?.avatarUrl == null || user!.avatarUrl!.isEmpty
                     ? Text(

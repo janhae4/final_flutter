@@ -602,7 +602,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     ? AppColors.surfaceDark
                     : AppColors.surface,
             backgroundImage: NetworkImage(
-              'http://localhost:3000/${_user?.avatarUrl}',
+              'https://final-flutter.onrender.com/${_user?.avatarUrl}',
             ),
           ),
           const SizedBox(height: 10),

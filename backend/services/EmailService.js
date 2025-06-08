@@ -1,6 +1,7 @@
 const Email = require('../models/Email');
 const User = require('../models/User');
 const { userSockets } = require('../db/websocket');
+const axios = require('axios');
 
 const resolveUsers = async (emails) => {
     if (!emails) return [];
@@ -20,14 +21,29 @@ const saveEmail = async (userId, data) => {
 
     const allReceivers = [...receivers, ...ccs, ...bccs];
 
+    const spamStatus = await predictSpamStatus(data.plainTextContent || data.subject);
+    const isSpam = spamStatus === 'spam';
     const emailPayload = {
         ...data,
         senderId: userId,
         receiverIds: allReceivers,
         attachmentsCount: data.attachments ? data.attachments.length : 0,
+        isSpam
     };
 
     return await Email.create(emailPayload);
+};
+
+const predictSpamStatus = async (message) => {
+    try {
+        const res = await axios.post('https://final-flutter-ml.onrender.com/predict', {
+            message: message || ''
+        });
+        return res.data.prediction || 'ham';
+    } catch (err) {
+        console.error("ML API error:", err.message);
+        return 'ham';
+    }
 };
 
 
@@ -243,4 +259,4 @@ exports.getEmailLabels = async (userId, labelId) => Email.find({
     .sort({ createdAt: -1 })
     .select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
 
-exports.getEmailSpam = async (userId) => Email.find({ senderId: userId, isSpam: true }).sort({ createdAt: -1 }).select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
+exports.getEmailSpam = async (userId) => Email.find({ [$or]: [{ senderId: userId }, { receiverIds: userId }], isSpam: true }).sort({ createdAt: -1 }).select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');

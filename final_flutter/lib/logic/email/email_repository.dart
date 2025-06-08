@@ -10,7 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class EmailRepository {
-  final backendUrl = 'http://localhost:3000/api/email';
+  final backendUrl = 'https://final-flutter.onrender.com/api/email';
   final _socketService = EmailSocketService();
 
   Future<String?> getToken() async {
@@ -61,6 +61,23 @@ class EmailRepository {
               .map((e) => EmailResponseModel.fromJson(e))
               .toList(),
     );
+  }
+
+  Future<List<EmailResponseModel>> getSpam() async {
+    final token = await getToken();
+    final res = await http.get(
+      Uri.parse('$backendUrl/spams'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+    if (res.statusCode != 200) {
+      final errorMessage = jsonDecode(res.body)['message'] ?? 'Login failed';
+      throw Exception(errorMessage);
+    }
+
+    final json = jsonDecode(res.body);
+    return json
+        .map<EmailResponseModel>((e) => EmailResponseModel.fromJson(e))
+        .toList();
   }
 
   Future<List<EmailResponseModel>> getSent() async {

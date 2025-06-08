@@ -6,7 +6,7 @@ class EmailSocketService {
 
   void initSocket(String token) {
     socket = IO.io(
-      'http://localhost:3000',
+      'https://final-flutter.onrender.com',
       IO.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()

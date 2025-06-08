@@ -9,7 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http_parser/http_parser.dart';
 
 class AuthRepository {
-  final String backendUrl = 'http://localhost:3000/api/auth';
+  final String backendUrl = 'https://final-flutter.onrender.com/api/auth';
 
   Future<UserModel?> getCurrentUser(String token) async {
     final res = await http.get(

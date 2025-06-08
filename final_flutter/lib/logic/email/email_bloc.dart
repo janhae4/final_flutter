@@ -259,6 +259,8 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
         return await _emailRepository.getDrafts();
       case 4:
         return await _emailRepository.getTrash();
+      case 5:
+        return await _emailRepository.getSpam();
       default:
         return await _emailRepository.getEmails();
     }
