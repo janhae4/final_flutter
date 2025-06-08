@@ -9,17 +9,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
-      # Cài đặt Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'  # hoặc bạn có thể ghi cụ thể phiên bản bạn muốn
+          flutter-version: '3.29.0'
       
-      # Build Flutter web
       - name: Build Flutter web
         run: flutter build web --release
       
-      # Deploy lên Firebase Hosting
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
