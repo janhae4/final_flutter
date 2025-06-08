@@ -50,10 +50,12 @@ const predictSpamStatus = async (message) => {
 exports.createEmail = async (userId, data) => {
 
     const newEmail = await saveEmail(userId, data);
+    console.log("SAVED", newEmail)
 
     newEmail.receiverIds.forEach(receiverId => {
         const socket = userSockets.get(receiverId.toString());
         if (socket) {
+            console.log('Sending new email to user', receiverId);
             socket.emit('new_email', {
                 id: newEmail._id,
                 sender: newEmail.sender,
