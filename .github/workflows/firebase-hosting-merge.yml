@@ -1,24 +1,35 @@
 name: Deploy to Firebase Hosting on merge
+
 on:
   push:
     branches:
       - main
+
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+
     steps:
+      # Checkout code từ GitHub
       - uses: actions/checkout@v4
-      
+
+      # Setup Flutter environment, dùng version 3.29.0
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.29.0'
-      
+
+      # Build Flutter web app (chuyển vào thư mục con trước)
       - name: Build Flutter web
         run: |
           cd final_flutter
           flutter build web --release
-      
+
+      # Debug kiểm tra file trong thư mục con (tuỳ chọn)
+      - name: List files in final_flutter for debug
+        run: ls -l final_flutter
+
+      # Deploy lên Firebase Hosting, chỉ rõ entryPoint để tìm firebase.json
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
