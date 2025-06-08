@@ -11,6 +11,7 @@ import 'package:final_flutter/logic/auth/auth_repository.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_repository.dart';
 import 'package:final_flutter/presentation/screens/auth/splash_screen.dart';
+import 'package:flutter_quill/flutter_quill.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -58,6 +59,13 @@ class MyApp extends StatelessWidget {
             themeMode: _getThemeMode(settingsState),
 
             home: const SplashScreen(),
+
+            localizationsDelegates: const [
+              FlutterQuillLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en'),
+            ],
 
             // Global error handling
             builder: (context, child) {

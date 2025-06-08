@@ -11,7 +11,6 @@ import 'package:final_flutter/logic/notification/notification_bloc.dart';
 import 'package:final_flutter/logic/notification/notification_event.dart';
 import 'package:final_flutter/logic/settings/settings_bloc.dart';
 import 'package:final_flutter/service/notification_service.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class EmailBloc extends Bloc<EmailEvent, EmailState> {

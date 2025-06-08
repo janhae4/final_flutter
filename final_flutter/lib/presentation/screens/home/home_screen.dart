@@ -42,6 +42,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     'Sent',
     'Drafts',
     'Trash',
+    'Spam',
   ];
 
   List<LabelModel>? _labels;
@@ -431,8 +432,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       child: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-          context.read<EmailBloc>().add(ChangeTab(index));
+          if (index >= 0 && index < _appBarTitles.length) {
+            setState(() => _currentIndex = index);
+            context.read<EmailBloc>().add(ChangeTab(index));
+          }
         },
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -468,6 +471,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             Icons.delete_rounded,
             Icons.delete_outline_rounded,
             'Trash',
+            settingsState,
+          ),
+          _buildNavDestination(
+            Icons.report_rounded,
+            Icons.report_outlined,
+            'Spam',
             settingsState,
           ),
         ],
@@ -715,6 +724,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         onTap: () {
           setState(() => _currentIndex = index);
+          print(index);
           context.read<EmailBloc>().add(ChangeTab(index));
           Navigator.pop(context);
         },

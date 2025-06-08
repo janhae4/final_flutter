@@ -11,8 +11,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_quill/flutter_quill.dart';
-import 'package:flutter_quill/quill_delta.dart';
+import 'package:flutter_quill/flutter_quill.dart'
+    show Document, QuillController, QuillEditor, QuillEditorConfigurations, QuillSharedConfigurations, QuillSimpleToolbar, QuillSimpleToolbarConfigurations, QuillEditorConfig;
 import 'package:final_flutter/logic/settings/settings_bloc.dart';
 import 'package:final_flutter/logic/settings/settings_state.dart';
 
@@ -157,7 +157,11 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                 color: AppColors.surface.withAlpha((255 * 0.2).toInt()),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.check_circle, color: AppColors.surface, size: 20),
+              child: Icon(
+                Icons.check_circle,
+                color: AppColors.surface,
+                size: 20,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -194,7 +198,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         );
       }
     } catch (e) {
-      _showFloatingMessage('Error selecting files', AppColors.accent.withAlpha((255 * 0.8).toInt()));
+      _showFloatingMessage(
+        'Error selecting files',
+        AppColors.accent.withAlpha((255 * 0.8).toInt()),
+      );
     }
   }
 
@@ -263,8 +270,14 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
-              secondary: settingsState.isDarkMode ? AppColors.primaryLight : AppColors.primaryLight,
+              primary:
+                  settingsState.isDarkMode
+                      ? AppColors.primaryDark
+                      : AppColors.primary,
+              secondary:
+                  settingsState.isDarkMode
+                      ? AppColors.primaryLight
+                      : AppColors.primaryLight,
             ),
           ),
           child: BlocConsumer<EmailBloc, EmailState>(
@@ -277,30 +290,37 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                   _bccController.text = _email!.bcc.join(', ');
                   _subjectController.text = _email!.subject;
                   _contentController = QuillController(
-                    document: _isValidQuillContent(_email!.content)
-                        ? Document.fromJson(_email!.content)
-                        : Document(),
+                    document:
+                        _isValidQuillContent(_email!.content)
+                            ? Document.fromJson(_email!.content)
+                            : Document(),
                     selection: const TextSelection.collapsed(offset: 0),
                   );
                 });
               }
             },
-            builder: (context, state) => Scaffold(
-              backgroundColor: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
-              extendBodyBehindAppBar: true,
-              appBar: _buildModernAppBar(settingsState),
-              body: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: _buildBody(settingsState),
+            builder:
+                (context, state) => Scaffold(
+                  backgroundColor:
+                      settingsState.isDarkMode
+                          ? AppColors.backgroundDark
+                          : AppColors.background,
+                  extendBodyBehindAppBar: true,
+                  appBar: _buildModernAppBar(settingsState),
+                  body: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: _buildBody(settingsState),
+                      ),
+                    ),
+                  ),
+                  floatingActionButton: _buildFloatingActionButton(
+                    settingsState,
                   ),
                 ),
-              ),
-              floatingActionButton: _buildFloatingActionButton(settingsState),
-            ),
           ),
         );
       },
@@ -323,8 +343,12 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              settingsState.isDarkMode ? AppColors.primaryDark.withAlpha((255 * 0.8).toInt()) : AppColors.primary.withAlpha((255 * 0.8).toInt()),
-              settingsState.isDarkMode ? AppColors.primaryLight.withAlpha((255 * 0.8).toInt()) : AppColors.primaryLight.withAlpha((255 * 0.8).toInt()),
+              settingsState.isDarkMode
+                  ? AppColors.primaryDark.withAlpha((255 * 0.8).toInt())
+                  : AppColors.primary.withAlpha((255 * 0.8).toInt()),
+              settingsState.isDarkMode
+                  ? AppColors.primaryLight.withAlpha((255 * 0.8).toInt())
+                  : AppColors.primaryLight.withAlpha((255 * 0.8).toInt()),
             ],
           ),
           borderRadius: const BorderRadius.only(
@@ -338,7 +362,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt()) : AppColors.surface.withAlpha((255 * 0.2).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt())
+                      : AppColors.surface.withAlpha((255 * 0.2).toInt()),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -347,7 +374,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                   : widget.forward != null
                   ? Icons.forward
                   : Icons.edit,
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.surface,
               size: 20,
             ),
           ),
@@ -359,7 +389,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                 ? 'Forward'
                 : 'Compose',
             style: TextStyle(
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.surface,
               fontWeight: FontWeight.w600,
               fontSize: settingsState.fontSize + 2,
               fontFamily: settingsState.fontFamily,
@@ -373,12 +406,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt()) : AppColors.surface.withAlpha((255 * 0.2).toInt()),
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt())
+                        : AppColors.surface.withAlpha((255 * 0.2).toInt()),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
                 Icons.save,
-                color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.surface,
                 size: 20,
               ),
             ),
@@ -388,12 +427,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
           icon: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt()) : AppColors.surface.withAlpha((255 * 0.2).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt())
+                      : AppColors.surface.withAlpha((255 * 0.2).toInt()),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               Icons.attach_file,
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.surface,
               size: 20,
             ),
           ),
@@ -426,11 +471,17 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.surfaceDark
+                : AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt())
+                    : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -494,29 +545,52 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
     );
   }
 
-  Widget _buildToggleButton(String text, bool isActive, VoidCallback onTap, SettingsState settingsState) {
+  Widget _buildToggleButton(
+    String text,
+    bool isActive,
+    VoidCallback onTap,
+    SettingsState settingsState,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive
-              ? (settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary)
-              : (settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surfaceVariant).withAlpha((255 * 0.1).toInt()),
+          color:
+              isActive
+                  ? (settingsState.isDarkMode
+                      ? AppColors.primaryDark
+                      : AppColors.primary)
+                  : (settingsState.isDarkMode
+                          ? AppColors.surfaceDark
+                          : AppColors.surfaceVariant)
+                      .withAlpha((255 * 0.1).toInt()),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isActive
-                ? (settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary)
-                : (settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surfaceVariant).withAlpha((255 * 0.2).toInt()),
+            color:
+                isActive
+                    ? (settingsState.isDarkMode
+                        ? AppColors.primaryDark
+                        : AppColors.primary)
+                    : (settingsState.isDarkMode
+                            ? AppColors.surfaceDark
+                            : AppColors.surfaceVariant)
+                        .withAlpha((255 * 0.2).toInt()),
           ),
         ),
         child: Text(
           isActive ? 'Hide $text' : 'Add $text',
           style: TextStyle(
-            color: isActive
-                ? (settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface)
-                : (settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.surfaceVariant).withAlpha((255 * 0.8).toInt()),
+            color:
+                isActive
+                    ? (settingsState.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.surface)
+                    : (settingsState.isDarkMode
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textPrimary)
+                        .withAlpha((255 * 0.8).toInt()),
             fontWeight: FontWeight.w500,
             fontSize: settingsState.fontSize - 2,
             fontFamily: settingsState.fontFamily,
@@ -540,49 +614,73 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         style: TextStyle(
           fontSize: settingsState.fontSize,
           fontFamily: settingsState.fontFamily,
-          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.textPrimary,
         ),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: TextStyle(
             fontSize: settingsState.fontSize,
             fontFamily: settingsState.fontFamily,
-            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondary,
           ),
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: settingsState.isDarkMode ? AppColors.primaryDark.withAlpha((255 * 0.1).toInt()) : AppColors.primary.withAlpha((255 * 0.1).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.primaryDark.withAlpha((255 * 0.1).toInt())
+                      : AppColors.primary.withAlpha((255 * 0.1).toInt()),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               icon,
-              color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.primaryDark
+                      : AppColors.primary,
               size: 20,
             ),
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-              color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.3).toInt()) : AppColors.surfaceVariant.withAlpha((255 * 0.3).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.surfaceDark.withAlpha((255 * 0.3).toInt())
+                      : AppColors.surfaceVariant.withAlpha((255 * 0.3).toInt()),
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-              color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.3).toInt()) : AppColors.surfaceVariant.withAlpha((255 * 0.3).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.surfaceDark.withAlpha((255 * 0.3).toInt())
+                      : AppColors.surfaceVariant.withAlpha((255 * 0.3).toInt()),
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide(
-              color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.primaryDark
+                      : AppColors.primary,
               width: 2,
             ),
           ),
           filled: true,
-          fillColor: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.1).toInt()) : AppColors.surfaceVariant.withAlpha((255 * 0.1).toInt()),
+          fillColor:
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark.withAlpha((255 * 0.1).toInt())
+                  : AppColors.surfaceVariant.withAlpha((255 * 0.1).toInt()),
         ),
         validator: null,
       ),
@@ -593,11 +691,17 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.surfaceDark
+                : AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt())
+                    : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -613,12 +717,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: settingsState.isDarkMode ? AppColors.warning.withAlpha((255 * 0.1).toInt()) : AppColors.warning.withAlpha((255 * 0.1).toInt()),
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.warning.withAlpha((255 * 0.1).toInt())
+                            : AppColors.warning.withAlpha((255 * 0.1).toInt()),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.attach_file,
-                    color: settingsState.isDarkMode ? AppColors.warning : AppColors.warning,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.warning
+                            : AppColors.warning,
                     size: 20,
                   ),
                 ),
@@ -629,7 +739,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                     fontWeight: FontWeight.w600,
                     fontSize: settingsState.fontSize,
                     fontFamily: settingsState.fontFamily,
-                    color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -638,11 +751,12 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _attachments.asMap().entries.map((entry) {
-                final index = entry.key;
-                final file = entry.value;
-                return _buildAttachmentChip(file, index, settingsState);
-              }).toList(),
+              children:
+                  _attachments.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final file = entry.value;
+                    return _buildAttachmentChip(file, index, settingsState);
+                  }).toList(),
             ),
           ],
         ),
@@ -650,14 +764,24 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
     );
   }
 
-  Widget _buildAttachmentChip(PlatformFile file, int index, SettingsState settingsState) {
+  Widget _buildAttachmentChip(
+    PlatformFile file,
+    int index,
+    SettingsState settingsState,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: settingsState.isDarkMode ? AppColors.info.withAlpha((255 * 0.1).toInt()) : AppColors.info.withAlpha((255 * 0.1).toInt()),
+        color:
+            settingsState.isDarkMode
+                ? AppColors.info.withAlpha((255 * 0.1).toInt())
+                : AppColors.info.withAlpha((255 * 0.1).toInt()),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: settingsState.isDarkMode ? AppColors.info.withAlpha((255 * 0.3).toInt()) : AppColors.info.withAlpha((255 * 0.3).toInt()),
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.info.withAlpha((255 * 0.3).toInt())
+                  : AppColors.info.withAlpha((255 * 0.3).toInt()),
         ),
       ),
       child: Row(
@@ -677,7 +801,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
                 fontSize: settingsState.fontSize - 2,
                 fontFamily: settingsState.fontFamily,
                 fontWeight: FontWeight.w500,
-                color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary,
               ),
               overflow: TextOverflow.ellipsis,
             ),
@@ -688,12 +815,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: settingsState.isDarkMode ? AppColors.accent.withAlpha((255 * 0.1).toInt()) : AppColors.accent.withAlpha((255 * 0.1).toInt()),
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.accent.withAlpha((255 * 0.1).toInt())
+                        : AppColors.accent.withAlpha((255 * 0.1).toInt()),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Icon(
                 Icons.close,
-                color: settingsState.isDarkMode ? AppColors.accent : AppColors.accent,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.accent
+                        : AppColors.accent,
                 size: 14,
               ),
             ),
@@ -706,13 +839,19 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   Widget _buildEditorCard(SettingsState settingsState) {
     return Container(
       margin: const EdgeInsets.all(16),
-      height: MediaQuery.of(context).size.height * 1.5,
+      height: MediaQuery.of(context).size.height * 0.6,
       decoration: BoxDecoration(
-        color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.surfaceDark
+                : AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt())
+                    : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
@@ -725,33 +864,29 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt()) : AppColors.surfaceVariant.withAlpha((255 * 0.2).toInt()),
+                  color:
+                      settingsState.isDarkMode
+                          ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt())
+                          : AppColors.surfaceVariant.withAlpha(
+                            (255 * 0.2).toInt(),
+                          ),
                 ),
               ),
             ),
-            child: QuillToolbar.simple(
-              configurations: QuillSimpleToolbarConfigurations(
-                controller: _contentController,
-                sharedConfigurations: const QuillSharedConfigurations(
-                  locale: Locale('en'),
-                ),
-              ),
-            ),
+            child: QuillSimpleToolbar(controller: _contentController),
           ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16),
-              child: QuillEditor.basic(
-                configurations: QuillEditorConfigurations(
-                  controller: _contentController,
-                  sharedConfigurations: const QuillSharedConfigurations(
-                    locale: Locale('en'),
-                  ),
-                  placeholder: 'Write your message here...',
-                  scrollable: true,
+              child: QuillEditor(
+                controller: _contentController,
+                scrollController: ScrollController(),
+                focusNode: FocusNode(),
+                config: QuillEditorConfig(
                   autoFocus: false,
                   expands: true,
                   padding: const EdgeInsets.all(16),
+                  placeholder: 'Write your message here...',
                 ),
               ),
             ),
@@ -766,14 +901,21 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
-            settingsState.isDarkMode ? AppColors.primaryLight : AppColors.primaryLight,
+            settingsState.isDarkMode
+                ? AppColors.primaryDark
+                : AppColors.primary,
+            settingsState.isDarkMode
+                ? AppColors.primaryLight
+                : AppColors.primaryLight,
           ],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: settingsState.isDarkMode ? AppColors.primaryDark.withAlpha((255 * 0.2).toInt()) : AppColors.primaryDark.withAlpha((255 * 0.2).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.primaryDark.withAlpha((255 * 0.2).toInt())
+                    : AppColors.primaryDark.withAlpha((255 * 0.2).toInt()),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -785,12 +927,18 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
         elevation: 0,
         icon: Icon(
           Icons.send,
-          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.surface,
         ),
         label: Text(
           'Send Email',
           style: TextStyle(
-            color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.surface,
             fontWeight: FontWeight.w600,
             fontSize: settingsState.fontSize,
             fontFamily: settingsState.fontFamily,
@@ -839,4 +987,3 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
     super.dispose();
   }
 }
-

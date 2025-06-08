@@ -7,9 +7,9 @@ const emailSchema = new mongoose.Schema({
     receiverIds: { type: [String], default: [], select: false },
     cc: { type: [String], default: [], select: false },
     bcc: { type: [String], default: [], select: false },
-    subject: { type: String, required: true },
-    content: { type: [mongoose.Schema.Types.Mixed], required: true, select: false },
-    plainTextContent: { type: String, required: true, index: true },
+    subject: { type: String },
+    content: { type: [mongoose.Schema.Types.Mixed], select: false },
+    plainTextContent: { type: String, index: true },
     attachments: { type: [{ name: String, path: String, data: String }], default: [], select: false },
     attachmentsCount: { type: Number, default: 0 },
     labels: [{

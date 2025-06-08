@@ -18,7 +18,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_quill/flutter_quill.dart';
+import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController, QuillEditor, QuillEditorConfig, QuillEditorConfigurations;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -503,7 +503,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           'to ${currentEmail!.to.join(', ')}',
           style: TextStyle(
             fontSize: settingsState.fontSize,
-            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.surfaceVariant.withAlpha((255 * 0.8).toInt()),
+            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textPrimary.withAlpha((255 * 0.8).toInt()),
             fontFamily: settingsState.fontFamily,
           ),
         ),
@@ -512,7 +512,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           DateFormat('MMM d, yyyy at h:mm a').format(currentEmail!.time),
           style: TextStyle(
             fontSize: settingsState.fontSize - 2,
-            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.surfaceVariant.withAlpha((255 * 0.8).toInt()),
+            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textPrimary.withAlpha((255 * 0.8).toInt()),
             fontFamily: settingsState.fontFamily,
           ),
         ),
@@ -587,32 +587,21 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_quillController != null)
-              Container(
-                height: MediaQuery.of(context).size.height * 0.5,
-                child: QuillEditor.basic(
-                  configurations: QuillEditorConfigurations(
-                    controller: _quillController!,
-                    scrollable: true,
-                    autoFocus: false,
-                    expands: false,
-                    padding: const EdgeInsets.all(16),
-                    placeholder: 'No content',
-                    customStyles: DefaultStyles(
-                      paragraph: DefaultTextBlockStyle(
-                        TextStyle(
-                          fontSize: settingsState.fontSize,
-                          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
-                          fontFamily: settingsState.fontFamily,
-                        ),
-                        const VerticalSpacing(0, 0),
-                        const VerticalSpacing(0, 0),
-                        null,
-                      ),
-                    ),
-                  ),
+            Container(
+              height: MediaQuery.of(context).size.height * 0.2,
+              child: QuillEditor(
+                controller: _quillController!,
+                scrollController: ScrollController(),
+                focusNode: FocusNode(),
+                config: QuillEditorConfig(
+                  scrollable: true,
+                  autoFocus: false,
+                  expands: false,
+                  padding: const EdgeInsets.all(16),
+                  placeholder: 'No content',
                 ),
               ),
+            ),
           ],
         ),
       ),
