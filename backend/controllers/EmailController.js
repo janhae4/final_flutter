@@ -24,6 +24,7 @@ exports.updateEmail = async (req, res) => {
 
 exports.getAllEmails = async (req, res) => {
     try {
+        console.log(req.user.id);
         const emails = await EmailService.getAllEmails(req.user.id);
         res.json(emails);
     } catch (error) {

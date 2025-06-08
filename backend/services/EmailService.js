@@ -21,7 +21,8 @@ const saveEmail = async (userId, data) => {
 
     const allReceivers = [...receivers, ...ccs, ...bccs];
 
-    const spamStatus = await predictSpamStatus(data.plainTextContent || data.subject);
+    const spamStatus = await predictSpamStatus(data.subject);
+    print (spamStatus)
     const isSpam = spamStatus === 'spam';
     const emailPayload = {
         ...data,
