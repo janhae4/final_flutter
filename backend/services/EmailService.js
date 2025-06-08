@@ -132,7 +132,15 @@ exports.getDrafts = async (userId) => await Email.find({ senderId: userId, isDra
 
 exports.getTrash = async (userId) => await Email.find({ senderId: userId, isInTrash: true }).sort({ createdAt: -1 });
 
-exports.getSpam = async (userId) => await Email.find({ $or: [{ senderId: userId }, { receiverIds: userId }], isSpam: true }).sort({ createdAt: -1 });
+exports.getSpam = async (userId) => await Email.find({
+    $and: [
+        {
+            $or: [{ senderId: userId },
+            { receiverIds: userId }], isSpam: true
+        }
+
+    ]
+}).sort({ createdAt: -1 });
 
 exports.toggleStar = async (id) => {
     const email = await Email.findById(id);
