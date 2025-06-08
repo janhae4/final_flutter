@@ -39,7 +39,6 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     on<RemoveLabelFromEmail>(_onRemoveLabelFromEmail);
     on<DraftEmail>(_onDraftEmail);
     on<DeleteDraft>(_onDeleteDraft);
-  
   }
 
   Future<void> _onConnectSocket(
@@ -123,7 +122,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     final currentState = state;
     if (currentState is EmailLoaded) {
       final emails = await _getEmailsForCurrentTab(event.index);
-      emit(EmailLoading()); 
+      emit(EmailLoading());
       emit(currentState.copyWith(currentTab: event.index, emails: emails));
     }
   }
@@ -264,11 +263,17 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
-    emit(EmailLoading());
     if (currentState is EmailLoaded) {
+      emit(EmailLoading());
       await _emailRepository.addLabelToEmail(event.emailId, event.label);
       final emails = await _getEmailsForCurrentTab(currentState.currentTab);
       emit(currentState.copyWith(emails: emails));
+    }
+    if (currentState is EmailDetailLoaded) {
+      emit(EmailLoading());
+      await _emailRepository.addLabelToEmail(event.emailId, event.label);
+      final email = await _emailRepository.getEmailDetail(event.emailId);
+      emit(EmailDetailLoaded(email));
     }
   }
 
@@ -279,10 +284,16 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     final currentState = state;
     if (currentState is EmailLoaded) {
       emit(EmailLoading());
-
       await _emailRepository.removeLabelFromEmail(event.emailId, event.label);
       final emails = await _getEmailsForCurrentTab(currentState.currentTab);
       emit(currentState.copyWith(emails: emails));
+    }
+
+    if (currentState is EmailDetailLoaded) {
+      emit(EmailLoading());
+      await _emailRepository.removeLabelFromEmail(event.emailId, event.label);
+      final email = await _emailRepository.getEmailDetail(event.emailId);
+      emit(EmailDetailLoaded(email));
     }
   }
 

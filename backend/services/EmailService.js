@@ -134,9 +134,9 @@ exports.moveToTrash = async (id) => Email.findByIdAndUpdate(id, { isInTrash: tru
 exports.restoreEmail = async (id) => Email.findByIdAndUpdate(id, { isInTrash: false }, { new: true });
 
 exports.searchEmails = async (userId, query) => {
-    console.log("Search Query:", query);
-    const regex = new RegExp(query, 'i');
-
+    const escapeRegex = str => str.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+    const regex = new RegExp(escapeRegex(query), 'i');
+    console.log("Search Query:", query, regex.test("Earn $5000"));
     return await Email.find({
         $and: [
             {

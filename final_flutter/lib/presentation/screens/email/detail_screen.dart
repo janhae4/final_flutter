@@ -6,6 +6,7 @@ import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_attachment_model.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
+import 'package:final_flutter/data/models/label_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
 import 'package:final_flutter/logic/email/email_bloc.dart';
 import 'package:final_flutter/logic/email/email_event.dart';
@@ -23,9 +24,15 @@ import 'package:web/web.dart' as html;
 
 class EmailDetailScreen extends StatefulWidget {
   final UserModel? user;
+  final List<LabelModel>? labels;
   final String id;
 
-  const EmailDetailScreen({super.key, required this.user, required this.id});
+  const EmailDetailScreen({
+    super.key,
+    required this.user,
+    required this.id,
+    this.labels,
+  });
 
   @override
   State<EmailDetailScreen> createState() => _EmailDetailScreenState();
@@ -1156,20 +1163,109 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   }
 
   void _showLabelsDialog() {
+    void Function(void Function())? setStateDialog;
+
     showDialog(
       context: context,
       builder:
-          (context) => AlertDialog(
-            title: const Text('Manage Labels'),
-            content: const Text('Label management functionality coming soon!'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
+          (context) => BlocListener<EmailBloc, EmailState>(
+            listener: (context, state) {
+              if (state is EmailDetailLoaded) {
+                // Email được cập nhật → gọi setState của dialog để redraw lại
+                setState(() {
+                  currentEmail = state.emailThread.email;
+                });
+                if (setStateDialog != null) {
+                  setStateDialog!(() {}); // rebuild dialog
+                }
+              }
+            },
+            child: AlertDialog(
+              title: const Text('Manage Labels'),
+              content: SizedBox(
+                width: 300,
+                child: StatefulBuilder(
+                  builder: (context, setStateSB) {
+                    setStateDialog =
+                        setStateSB; // giữ lại để dùng trong BlocListener
+
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: widget.labels!.length,
+                      separatorBuilder:
+                          (context, index) =>
+                              const Divider(height: 1, color: AppColors.border),
+                      itemBuilder: (context, index) {
+                        final label = widget.labels![index];
+                        final isSelected = currentEmail!.labels
+                            .map((l) => l['_id'])
+                            .contains(label.id);
+
+                        return ListTile(
+                          leading: Container(
+                            width: 24,
+                            height: 24,
+                            decoration: BoxDecoration(
+                              color: _getLabelColor(label).withAlpha(25),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Icon(
+                              Icons.label_rounded,
+                              size: 14,
+                              color: _getLabelColor(label),
+                            ),
+                          ),
+                          title: Text(
+                            label.label,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          trailing:
+                              isSelected
+                                  ? Icon(
+                                    Icons.check_rounded,
+                                    color: AppColors.success,
+                                    size: 20,
+                                  )
+                                  : null,
+                          onTap: () {
+                            context.read<EmailBloc>().add(
+                              AddLabelToEmail(currentEmail!.id, label),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Close'),
+                ),
+              ],
+            ),
           ),
     );
+  }
+
+  Color _getLabelColor(LabelModel label) {
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.red,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+    ];
+
+    return colors[label.id.hashCode % colors.length];
   }
 
   void _moveToTrash() {

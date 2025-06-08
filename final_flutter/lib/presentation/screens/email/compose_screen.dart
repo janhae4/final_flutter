@@ -229,7 +229,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
       isReplied: widget.replyTo != null ? true : false,
       isForwarded: widget.forward != null ? true : false,
       originalEmailId: widget.replyTo?.id ?? widget.forward?.id ?? '',
-      isDraft: _isDraft,
+      isDraft: isDraft,
     );
 
     if (isDraft) {
@@ -273,7 +273,10 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
               _bccController.text = _email!.bcc.join(', ');
               _subjectController.text = _email!.subject;
               _contentController = QuillController(
-                document: Document.fromJson(_email!.content),
+                document:
+                    _isValidQuillContent(_email!.content)
+                        ? Document.fromJson(_email!.content)
+                        : Document(),
                 selection: const TextSelection.collapsed(offset: 0),
               );
             });
@@ -298,6 +301,12 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
             ),
       ),
     );
+  }
+
+  bool _isValidQuillContent(dynamic content) {
+    return content is List &&
+        content.isNotEmpty &&
+        content.every((e) => e is Map<String, dynamic>);
   }
 
   PreferredSizeWidget _buildModernAppBar() {

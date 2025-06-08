@@ -724,7 +724,7 @@ class _InboxScreenState extends State<InboxScreen>
           builder:
               (context) => BlocProvider.value(
                 value: context.read<EmailBloc>(),
-                child: EmailDetailScreen(user: widget.user, id: emailId),
+                child: EmailDetailScreen(user: widget.user, id: emailId, labels: widget.labels,),
               ),
         ),
       );
@@ -749,9 +749,7 @@ class _InboxScreenState extends State<InboxScreen>
         context.read<EmailBloc>().add(AddLabelToEmail(email.id!, label!));
         break;
       case 'mark_read':
-        if (!email.isRead) {
-          context.read<EmailBloc>().add(MarkEmailAsRead(email.id!, false));
-        }
+        context.read<EmailBloc>().add(MarkEmailAsRead(email.id!, !email.isRead));
         break;
       case 'archive':
         break;

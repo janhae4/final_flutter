@@ -265,6 +265,7 @@ class EmailRepository {
 
   Future<void> addLabelToEmail(String emailId, LabelModel label) async {
     final token = await getToken();
+    print("ADDDD");
     final res = await http.post(
       Uri.parse('$backendUrl/$emailId/labels'),
       headers: {

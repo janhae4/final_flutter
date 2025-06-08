@@ -275,10 +275,14 @@ class _LoginScreenState extends State<LoginScreen>
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: [
-                                AppColors.primary,
-                                AppColors.primary.withAlpha((255 * 0.8).toInt()),
-                              ]),
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primary.withAlpha(
+                                    (255 * 0.8).toInt(),
+                                  ),
+                                ],
+                              ),
                               borderRadius: BorderRadius.circular(25),
                               boxShadow: [
                                 BoxShadow(
@@ -315,7 +319,9 @@ class _LoginScreenState extends State<LoginScreen>
                           'Sign in to continue',
                           style: TextStyle(
                             fontSize: 16,
-                            color: AppColors.textPrimary.withAlpha((255 * 0.8).toInt()),
+                            color: AppColors.textPrimary.withAlpha(
+                              (255 * 0.8).toInt(),
+                            ),
                           ),
                         ),
 
@@ -328,7 +334,9 @@ class _LoginScreenState extends State<LoginScreen>
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(25),
-                            border: Border.all(color: Colors.grey.withAlpha((255 * 0.1).toInt())),
+                            border: Border.all(
+                              color: Colors.grey.withAlpha((255 * 0.1).toInt()),
+                            ),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withAlpha(
@@ -461,7 +469,9 @@ class _LoginScreenState extends State<LoginScreen>
                                             gradient: LinearGradient(
                                               colors: [
                                                 AppColors.primary,
-                                                AppColors.primary.withAlpha((255 * 0.9).toInt()),
+                                                AppColors.primary.withAlpha(
+                                                  (255 * 0.9).toInt(),
+                                                ),
                                               ],
                                             ),
                                             borderRadius: BorderRadius.circular(
@@ -524,34 +534,19 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
 
                               const SizedBox(height: 20),
-
-                              // Forgot Password
-                              TextButton(
-                                onPressed: () {
-                                  // Handle forgot password
-                                },
-                                child: const Text(
-                                  'Forgot Password?',
-                                  style: TextStyle(
-                                    color: Color(0xFF667eea),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
 
                         const SizedBox(height: 32),
 
-                        // Register Link
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               "Don't have an account? ",
                               style: TextStyle(
-                                color: Colors.white.withAlpha(
+                                color: AppColors.textPrimary.withAlpha(
                                   (255 * 0.8).toInt(),
                                 ),
                                 fontSize: 16,
@@ -588,11 +583,11 @@ class _LoginScreenState extends State<LoginScreen>
                               child: const Text(
                                 'Sign Up',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: AppColors.textPrimary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                   decoration: TextDecoration.underline,
-                                  decorationColor: Colors.white,
+                                  decorationColor: AppColors.textPrimary  ,
                                 ),
                               ),
                             ),
