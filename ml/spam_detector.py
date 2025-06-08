@@ -5,15 +5,20 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 
 app = Flask(__name__)
 
-with open('tokenizer.pkl', 'rb') as f:
-    tokenizer = pickle.load(f)
+tokenizer = None
+model = None
+max_len = 100
 
-model = load_model('spam_classifier_model.keras')
-
-max_len = 100 
+def load_resources():
+    global tokenizer, model
+    if tokenizer is None or model is None:
+        with open('tokenizer.pkl', 'rb') as f:
+            tokenizer = pickle.load(f)
+        model = load_model('spam_classifier_model.keras')
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    load_resources() 
     data = request.get_json(force=True)
     message = data.get('message', '')
 
