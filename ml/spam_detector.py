@@ -15,6 +15,10 @@ def load_resources():
         with open('tokenizer.pkl', 'rb') as f:
             tokenizer = pickle.load(f)
         model = load_model('spam_classifier_model.keras')
+        
+@app.route('/')
+def index():
+    return 'Spam detection API is running'
 
 @app.route('/predict', methods=['POST'])
 def predict():
