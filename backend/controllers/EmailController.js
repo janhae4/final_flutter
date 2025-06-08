@@ -187,7 +187,7 @@ exports.getEmailsByLabel = async (req, res) => {
 
 exports.getEmailSpam = async (req, res) => {
     try {
-        const emails = await EmailService.getEmailSpam(req.user.id);
+        const emails = await EmailService.getSpam(req.user.id);
         res.json(emails);
     } catch (error) {
         res.status(500).json({ message: error.message });

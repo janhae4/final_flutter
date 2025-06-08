@@ -132,7 +132,7 @@ exports.getDrafts = async (userId) => await Email.find({ senderId: userId, isDra
 
 exports.getTrash = async (userId) => await Email.find({ senderId: userId, isInTrash: true }).sort({ createdAt: -1 });
 
-exports.getSpam = async (userId) => await Email.find({ senderId: userId, isSpam: true }).sort({ createdAt: -1 });
+exports.getSpam = async (userId) => await Email.find({ $or: [{ senderId: userId }, { receiverIds: userId }], isSpam: true }).sort({ createdAt: -1 });
 
 exports.toggleStar = async (id) => {
     const email = await Email.findById(id);
@@ -260,5 +260,3 @@ exports.getEmailLabels = async (userId, labelId) => await Email.find({
 })
     .sort({ createdAt: -1 })
     .select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
-
-exports.getEmailSpam = async (userId) => await Email.find({ [$or]: [{ senderId: userId }, { receiverIds: userId }], isSpam: true }).sort({ createdAt: -1 }).select('-receiverIds -content -__v -senderId -to -bcc -cc -updatedAt');
