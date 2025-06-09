@@ -194,7 +194,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<UpdateLabel>((event, emit) async {
       try {
         final label = await repository.updateLabel(event.id, event.label);
-        print('Label updated: ${label}');
+        print('Label updated: $label');
         emit(LoadLabelsSuccess(label));
       } catch (e) {
         emit(UpdateError(e.toString()));

@@ -317,7 +317,7 @@ class EmailRepository {
 
     final url =
         isNew
-            ? Uri.parse('$backendUrl') // POST to create
+            ? Uri.parse(backendUrl) // POST to create
             : Uri.parse('$backendUrl/${email.id}'); // PATCH to update
 
     final res =

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -27,8 +27,9 @@ class NotificationService {
       enableVibration: true,
     );
 
+    // Fixed: Use built-in Android email icon
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings('@android:drawable/ic_dialog_email');
 
     final DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -74,8 +75,7 @@ class NotificationService {
   void _onNotificationTap(NotificationResponse response) {
     if (response.payload != null) {
       print('Notification tapped with payload: ${response.payload}');
-      // TODO: Điều hướng đến màn hình chi tiết email
-      // Ví dụ: Navigator.push(context, EmailDetailScreen(emailId: response.payload));
+      // Navigator.push(context, EmailDetailScreen(emailId: response.payload));
     }
   }
 
@@ -99,7 +99,8 @@ class NotificationService {
       styleInformation: MessagingStyleInformation(
         Person(
           name: 'Email',
-          icon: const BitmapFilePathAndroidIcon('@mipmap/ic_launcher'),
+          // Fixed: Remove the icon or use a proper drawable resource
+          // icon: const BitmapFilePathAndroidIcon('@mipmap/ic_launcher'),
         ),
         groupConversation: true,
         conversationTitle: 'New email',

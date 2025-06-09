@@ -12,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart'
-    show Document, QuillController, QuillEditor, QuillEditorConfigurations, QuillSharedConfigurations, QuillSimpleToolbar, QuillSimpleToolbarConfigurations, QuillEditorConfig;
+    show Document, QuillController, QuillEditor, QuillSimpleToolbar, QuillEditorConfig;
 import 'package:final_flutter/logic/settings/settings_bloc.dart';
 import 'package:final_flutter/logic/settings/settings_state.dart';
 
@@ -50,7 +50,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
   bool _showCc = false;
   bool _showBcc = false;
   bool _isDraft = false;
-  bool _isExpanded = false;
+  final bool _isExpanded = false;
   Timer? _autoSaveTimer;
   final List<PlatformFile> _attachments = [];
 

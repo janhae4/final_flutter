@@ -176,7 +176,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
-
+    print('event.id: ${event.id}');
     await _emailRepository.markRead(event.id);
     await _notificationService.markAsRead(event.id);
 
@@ -216,12 +216,13 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     // AUTO ANSWER LOGIC
     final settingsState = _settingsBloc.state;
     if (settingsState.autoAnswerEnabled && event.email.sender != null) {
-      // Lấy email người dùng hiện tại
       String? myEmail;
       final authState = _authBloc.state;
       if (authState is LoadProfileSuccess) {
         myEmail = authState.user.email;
       }
+      if (myEmail == event.email.sender) return;
+
       if (myEmail != null) {
         final autoAnswerEmail = Email(
           id: DateTime.now().millisecondsSinceEpoch.toString(),

@@ -35,7 +35,7 @@ class EmailResponseModel {
       json['plainTextContent'],
       json['attachments'] ?? [],
       json['attachmentsCount'] ?? 0,
-      List<dynamic>.from(json['labels'] as List<dynamic>),
+      json['labels'] ?? [],
       json['starred'] ?? false,
       json['isRead'] ?? false,
       json['isDraft'] ?? false,

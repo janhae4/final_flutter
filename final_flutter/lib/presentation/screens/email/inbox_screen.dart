@@ -1,5 +1,4 @@
 import 'package:final_flutter/config/app_theme.dart';
-import 'package:final_flutter/data/models/email.dart';
 import 'package:final_flutter/data/models/email_response_model.dart';
 import 'package:final_flutter/data/models/label_model.dart';
 import 'package:final_flutter/data/models/user_model.dart';
@@ -64,7 +63,10 @@ class _InboxScreenState extends State<InboxScreen>
       builder: (context, settingsState) {
         _settingsState = settingsState;
         return Scaffold(
-          backgroundColor: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+          backgroundColor:
+              settingsState.isDarkMode
+                  ? AppColors.backgroundDark
+                  : AppColors.background,
           body: BlocConsumer<EmailBloc, EmailState>(
             listener: (context, state) {
               if (state is EmailError) {
@@ -77,7 +79,10 @@ class _InboxScreenState extends State<InboxScreen>
               }
               return CustomScrollView(
                 controller: _scrollController,
-                slivers: [_buildFilterChips(settingsState), _buildEmailList(state, settingsState)],
+                slivers: [
+                  _buildFilterChips(settingsState),
+                  _buildEmailList(state, settingsState),
+                ],
               );
             },
           ),
@@ -108,9 +113,12 @@ class _InboxScreenState extends State<InboxScreen>
                 label: Text(
                   filter,
                   style: TextStyle(
-                    color: isSelected
-                        ? AppColors.textOnPrimary
-                        : settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    color:
+                        isSelected
+                            ? AppColors.textOnPrimary
+                            : settingsState.isDarkMode
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     fontSize: settingsState.fontSize,
                     fontFamily: settingsState.fontFamily,
@@ -118,10 +126,18 @@ class _InboxScreenState extends State<InboxScreen>
                 ),
                 selected: isSelected,
                 selectedColor: AppColors.primary,
-                backgroundColor: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+                backgroundColor:
+                    settingsState.isDarkMode
+                        ? AppColors.surfaceDark
+                        : AppColors.surface,
                 checkmarkColor: AppColors.textOnPrimary,
                 side: BorderSide(
-                  color: isSelected ? AppColors.primary : (settingsState.isDarkMode ? AppColors.borderDark : AppColors.border),
+                  color:
+                      isSelected
+                          ? AppColors.primary
+                          : (settingsState.isDarkMode
+                              ? AppColors.borderDark
+                              : AppColors.border),
                 ),
                 onSelected: (selected) {
                   setState(() => _selectedFilter = filter);
@@ -169,7 +185,10 @@ class _InboxScreenState extends State<InboxScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Card(
-        color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.surfaceDark
+                : AppColors.surface,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -181,7 +200,10 @@ class _InboxScreenState extends State<InboxScreen>
                     width: 40,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: settingsState.isDarkMode ? AppColors.dividerDark : AppColors.divider,
+                      color:
+                          settingsState.isDarkMode
+                              ? AppColors.dividerDark
+                              : AppColors.divider,
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
@@ -194,7 +216,10 @@ class _InboxScreenState extends State<InboxScreen>
                           width: double.infinity,
                           height: 16,
                           decoration: BoxDecoration(
-                            color: settingsState.isDarkMode ? AppColors.dividerDark : AppColors.divider,
+                            color:
+                                settingsState.isDarkMode
+                                    ? AppColors.dividerDark
+                                    : AppColors.divider,
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
@@ -203,7 +228,10 @@ class _InboxScreenState extends State<InboxScreen>
                           width: 100,
                           height: 12,
                           decoration: BoxDecoration(
-                            color: settingsState.isDarkMode ? AppColors.dividerDark : AppColors.divider,
+                            color:
+                                settingsState.isDarkMode
+                                    ? AppColors.dividerDark
+                                    : AppColors.divider,
                             borderRadius: BorderRadius.circular(6),
                           ),
                         ),
@@ -219,7 +247,10 @@ class _InboxScreenState extends State<InboxScreen>
     );
   }
 
-  Widget _buildEmailListView(List<EmailResponseModel> emails, SettingsState settingsState) {
+  Widget _buildEmailListView(
+    List<EmailResponseModel> emails,
+    SettingsState settingsState,
+  ) {
     if (emails.isEmpty) {
       return _buildEmptyState(settingsState);
     }
@@ -235,7 +266,10 @@ class _InboxScreenState extends State<InboxScreen>
     );
   }
 
-  Widget _buildEmailGridView(List<EmailResponseModel> emails, SettingsState settingsState) {
+  Widget _buildEmailGridView(
+    List<EmailResponseModel> emails,
+    SettingsState settingsState,
+  ) {
     if (emails.isEmpty) {
       return _buildEmptyState(settingsState);
     }
@@ -248,7 +282,7 @@ class _InboxScreenState extends State<InboxScreen>
         crossAxisCount: 2,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 3,
+        childAspectRatio: 2.5,
       ),
       itemCount: emails.length,
       itemBuilder: (context, index) {
@@ -258,17 +292,25 @@ class _InboxScreenState extends State<InboxScreen>
     );
   }
 
-  Widget _buildEmailItem(EmailResponseModel email, SettingsState settingsState) {
+  Widget _buildEmailItem(
+    EmailResponseModel email,
+    SettingsState settingsState,
+  ) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Card(
         elevation: email.isRead ? 1 : 3,
-        color: email.isRead 
-          ? (settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface)
-          : (settingsState.isDarkMode ? AppColors.unreadBackgroundDark : AppColors.unreadBackground),
+        color:
+            email.isRead
+                ? (settingsState.isDarkMode
+                    ? AppColors.surfaceDark
+                    : AppColors.surface)
+                : (settingsState.isDarkMode
+                    ? AppColors.unreadBackgroundDark
+                    : AppColors.unreadBackground),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => _openEmail(email.id!),
+          onTap: () => _openEmail(email.id ?? ''),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -276,7 +318,7 @@ class _InboxScreenState extends State<InboxScreen>
               children: [
                 Row(
                   children: [
-                    _buildSenderAvatar(email.sender!),
+                    _buildSenderAvatar(email.sender ?? 'Unknown'),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(
@@ -286,21 +328,30 @@ class _InboxScreenState extends State<InboxScreen>
                             children: [
                               Expanded(
                                 child: Text(
-                                  email.sender!,
+                                  email.sender ?? 'Unknown Sender',
                                   style: TextStyle(
-                                    fontWeight: email.isRead ? FontWeight.w500 : FontWeight.w700,
+                                    fontWeight:
+                                        email.isRead
+                                            ? FontWeight.w500
+                                            : FontWeight.w700,
                                     fontSize: settingsState.fontSize,
                                     fontFamily: settingsState.fontFamily,
-                                    color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                                    color:
+                                        settingsState.isDarkMode
+                                            ? AppColors.textPrimaryDark
+                                            : AppColors.textPrimary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               Text(
-                                _formatTime(email.createdAt!),
+                                _formatTime(email.createdAt ?? DateTime.now()),
                                 style: TextStyle(
                                   fontSize: settingsState.fontSize - 2,
-                                  color: settingsState.isDarkMode ? AppColors.textTertiaryDark : AppColors.textTertiary,
+                                  color:
+                                      settingsState.isDarkMode
+                                          ? AppColors.textTertiaryDark
+                                          : AppColors.textTertiary,
                                   fontFamily: settingsState.fontFamily,
                                 ),
                               ),
@@ -308,12 +359,18 @@ class _InboxScreenState extends State<InboxScreen>
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            email.subject.toString().trim(),
+                            (email.subject?.toString() ?? 'No Subject').trim(),
                             style: TextStyle(
-                              fontWeight: email.isRead ? FontWeight.w400 : FontWeight.w600,
+                              fontWeight:
+                                  email.isRead
+                                      ? FontWeight.w400
+                                      : FontWeight.w600,
                               fontSize: settingsState.fontSize - 2,
                               fontFamily: settingsState.fontFamily,
-                              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                              color:
+                                  settingsState.isDarkMode
+                                      ? AppColors.textPrimaryDark
+                                      : AppColors.textPrimary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -325,11 +382,15 @@ class _InboxScreenState extends State<InboxScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  email.plainTextContent.toString().trim(),
+                  (email.plainTextContent?.toString() ?? 'No content available')
+                      .trim(),
                   style: TextStyle(
                     fontSize: settingsState.fontSize - 3,
                     fontFamily: settingsState.fontFamily,
-                    color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
                     height: 1.3,
                   ),
                   maxLines: 2,
@@ -338,7 +399,7 @@ class _InboxScreenState extends State<InboxScreen>
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    if (email.attachmentsCount > 0)
+                    if ((email.attachmentsCount ?? 0) > 0)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -358,7 +419,7 @@ class _InboxScreenState extends State<InboxScreen>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${email.attachmentsCount}',
+                              '${email.attachmentsCount ?? 0}',
                               style: TextStyle(
                                 fontSize: settingsState.fontSize - 4,
                                 fontFamily: settingsState.fontFamily,
@@ -372,10 +433,15 @@ class _InboxScreenState extends State<InboxScreen>
                     const Spacer(),
                     IconButton(
                       icon: Icon(
-                        email.starred ? Icons.star : Icons.star_border,
-                        color: email.starred
-                            ? AppColors.starColor
-                            : (settingsState.isDarkMode ? AppColors.textTertiaryDark : AppColors.textTertiary),
+                        (email.starred ?? false)
+                            ? Icons.star
+                            : Icons.star_border,
+                        color:
+                            (email.starred ?? false)
+                                ? AppColors.starColor
+                                : (settingsState.isDarkMode
+                                    ? AppColors.textTertiaryDark
+                                    : AppColors.textTertiary),
                         size: 20,
                       ),
                       onPressed: () => _toggleStar(email),
@@ -389,7 +455,10 @@ class _InboxScreenState extends State<InboxScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+                      color:
+                          settingsState.isDarkMode
+                              ? AppColors.surfaceDark
+                              : AppColors.surface,
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -398,152 +467,158 @@ class _InboxScreenState extends State<InboxScreen>
                         ),
                         child: Icon(
                           Icons.more_vert_rounded,
-                          color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                          color:
+                              settingsState.isDarkMode
+                                  ? AppColors.textSecondaryDark
+                                  : AppColors.textSecondary,
                           size: 20,
                         ),
                       ),
-                      itemBuilder: (context) => [
-                        if (widget.labels != null &&
-                            widget.labels!.isNotEmpty) ...[
-                          PopupMenuItem<String>(
-                            value: 'select_label',
-                            enabled: false,
-                            height: 32,
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 4),
-                              child: Text(
-                                'LABELS',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary.withAlpha(
-                                    (255 * 0.8).toInt(),
+                      itemBuilder:
+                          (context) => [
+                            if (widget.labels != null &&
+                                widget.labels!.isNotEmpty) ...[
+                              PopupMenuItem<String>(
+                                value: 'select_label',
+                                enabled: false,
+                                height: 32,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Text(
+                                    'LABELS',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textSecondary.withAlpha(
+                                        (255 * 0.8).toInt(),
+                                      ),
+                                      letterSpacing: 0.8,
+                                    ),
                                   ),
-                                  letterSpacing: 0.8,
                                 ),
                               ),
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            enabled: false,
-                            height: 1,
-                            child: Divider(
-                              height: 1,
-                              thickness: 1,
-                              color: AppColors.textSecondary.withAlpha(
-                                (255 * 0.1).toInt(),
-                              ),
-                            ),
-                          ),
-                          ...widget.labels!.map(
-                            (label) => PopupMenuItem<String>(
-                              value: 'label_${label.id}',
-                              height: 48,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
+                              PopupMenuItem<String>(
+                                enabled: false,
+                                height: 1,
+                                child: Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: AppColors.textSecondary.withAlpha(
+                                    (255 * 0.1).toInt(),
+                                  ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 24,
-                                      height: 24,
-                                      decoration: BoxDecoration(
-                                        color: _getLabelColor(
-                                          label,
-                                        ).withAlpha((255 * 0.1).toInt()),
-                                        borderRadius: BorderRadius.circular(
-                                          6,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        Icons.label_rounded,
-                                        size: 14,
-                                        color: _getLabelColor(label),
-                                      ),
+                              ),
+                              ...widget.labels!.map(
+                                (label) => PopupMenuItem<String>(
+                                  value: 'label_${label.id}',
+                                  height: 48,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8,
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        label.label,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 24,
+                                          height: 24,
+                                          decoration: BoxDecoration(
+                                            color: _getLabelColor(
+                                              label,
+                                            ).withAlpha((255 * 0.1).toInt()),
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            Icons.label_rounded,
+                                            size: 14,
+                                            color: _getLabelColor(label),
+                                          ),
                                         ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            label.label,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        if ((email.labels ?? [])
+                                            .map((l) => l['_id'])
+                                            .contains(label.id))
+                                          Icon(
+                                            Icons.check_rounded,
+                                            color: AppColors.success,
+                                            size: 20,
+                                          ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 8),
-                                    if (email.labels.map((l) => l['_id']).contains(label.id))
-                                      Icon(
-                                        Icons.check_rounded,
-                                        color: AppColors.success,
-                                        size: 20,
-                                      ),
-                                  ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                          PopupMenuItem<String>(
-                            enabled: false,
-                            height: 8,
-                            child: Divider(
-                              height: 8,
-                              thickness: 1,
-                              color: AppColors.textSecondary.withAlpha(
-                                (255 * 0.1).toInt(),
+                              PopupMenuItem<String>(
+                                enabled: false,
+                                height: 8,
+                                child: Divider(
+                                  height: 8,
+                                  thickness: 1,
+                                  color: AppColors.textSecondary.withAlpha(
+                                    (255 * 0.1).toInt(),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        ],
+                            ],
 
-                        PopupMenuItem(
-                          value: 'mark_read',
-                          height: 48,
-                          child: _buildActionItem(
-                            icon:
-                                email.isRead
-                                    ? Icons.mark_email_unread_rounded
-                                    : Icons.mark_email_read_rounded,
-                            text:
-                                email.isRead
-                                    ? 'Mark as unread'
-                                    : 'Mark as read',
-                            color: AppColors.primary,
-                          ),
-                        ),
-
-                        PopupMenuItem(
-                          value: 'archive',
-                          height: 48,
-                          child: _buildActionItem(
-                            icon: Icons.archive_rounded,
-                            text: 'Archive',
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-
-                        email.isInTrash
-                            ? PopupMenuItem(
-                              value: 'restore',
+                            PopupMenuItem(
+                              value: 'mark_read',
                               height: 48,
                               child: _buildActionItem(
-                                icon: Icons.restore_from_trash_rounded,
-                                text: 'Restore',
-                                color: AppColors.accent,
-                              ),
-                            )
-                            : PopupMenuItem(
-                              value: 'delete',
-                              height: 48,
-                              child: _buildActionItem(
-                                icon: Icons.delete_rounded,
-                                text: 'Delete',
-                                color: AppColors.deleteColor,
+                                icon:
+                                    (email.isRead ?? false)
+                                        ? Icons.mark_email_unread_rounded
+                                        : Icons.mark_email_read_rounded,
+                                text:
+                                    (email.isRead ?? false)
+                                        ? 'Mark as unread'
+                                        : 'Mark as read',
+                                color: AppColors.primary,
                               ),
                             ),
-                      ],
+
+                            PopupMenuItem(
+                              value: 'archive',
+                              height: 48,
+                              child: _buildActionItem(
+                                icon: Icons.archive_rounded,
+                                text: 'Archive',
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+
+                            (email.isInTrash ?? false)
+                                ? PopupMenuItem(
+                                  value: 'restore',
+                                  height: 48,
+                                  child: _buildActionItem(
+                                    icon: Icons.restore_from_trash_rounded,
+                                    text: 'Restore',
+                                    color: AppColors.accent,
+                                  ),
+                                )
+                                : PopupMenuItem(
+                                  value: 'delete',
+                                  height: 48,
+                                  child: _buildActionItem(
+                                    icon: Icons.delete_rounded,
+                                    text: 'Delete',
+                                    color: AppColors.deleteColor,
+                                  ),
+                                ),
+                          ],
                     ),
                   ],
                 ),
@@ -632,7 +707,10 @@ class _InboxScreenState extends State<InboxScreen>
             Icon(
               Icons.inbox,
               size: 64,
-              color: settingsState.isDarkMode ? AppColors.textTertiaryDark : AppColors.textTertiary,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textTertiaryDark
+                      : AppColors.textTertiary,
             ),
             const SizedBox(height: 16),
             Text(
@@ -641,7 +719,10 @@ class _InboxScreenState extends State<InboxScreen>
                 fontSize: settingsState.fontSize + 2,
                 fontFamily: settingsState.fontFamily,
                 fontWeight: FontWeight.w600,
-                color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -650,7 +731,10 @@ class _InboxScreenState extends State<InboxScreen>
               style: TextStyle(
                 fontSize: settingsState.fontSize - 2,
                 fontFamily: settingsState.fontFamily,
-                color: settingsState.isDarkMode ? AppColors.textTertiaryDark : AppColors.textTertiary,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -667,11 +751,7 @@ class _InboxScreenState extends State<InboxScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.error,
-            ),
+            Icon(Icons.error_outline, size: 64, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
               'Something went wrong',
@@ -679,7 +759,10 @@ class _InboxScreenState extends State<InboxScreen>
                 fontSize: settingsState.fontSize + 2,
                 fontFamily: settingsState.fontFamily,
                 fontWeight: FontWeight.w600,
-                color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -688,7 +771,10 @@ class _InboxScreenState extends State<InboxScreen>
               style: TextStyle(
                 fontSize: settingsState.fontSize - 2,
                 fontFamily: settingsState.fontFamily,
-                color: settingsState.isDarkMode ? AppColors.textTertiaryDark : AppColors.textTertiary,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textTertiaryDark
+                        : AppColors.textTertiary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -745,7 +831,11 @@ class _InboxScreenState extends State<InboxScreen>
           builder:
               (context) => BlocProvider.value(
                 value: context.read<EmailBloc>(),
-                child: EmailDetailScreen(user: widget.user, id: emailId, labels: widget.labels,),
+                child: EmailDetailScreen(
+                  user: widget.user,
+                  id: emailId,
+                  labels: widget.labels,
+                ),
               ),
         ),
       );
@@ -770,7 +860,10 @@ class _InboxScreenState extends State<InboxScreen>
         context.read<EmailBloc>().add(AddLabelToEmail(email.id!, label!));
         break;
       case 'mark_read':
-        context.read<EmailBloc>().add(MarkEmailAsRead(email.id!, !email.isRead));
+        print('READ');
+        context.read<EmailBloc>().add(
+          MarkEmailAsRead(email.id!, !email.isRead),
+        );
         break;
       case 'archive':
         break;
@@ -787,11 +880,17 @@ class _InboxScreenState extends State<InboxScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+        color:
+            _settingsState.isDarkMode
+                ? AppColors.surfaceDark
+                : AppColors.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+            color:
+                _settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt())
+                    : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -804,7 +903,10 @@ class _InboxScreenState extends State<InboxScreen>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+              color:
+                  _settingsState.isDarkMode
+                      ? AppColors.backgroundDark
+                      : AppColors.background,
               borderRadius: BorderRadius.circular(12),
             ),
           ),
@@ -817,7 +919,10 @@ class _InboxScreenState extends State<InboxScreen>
                   width: double.infinity,
                   height: 16,
                   decoration: BoxDecoration(
-                    color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+                    color:
+                        _settingsState.isDarkMode
+                            ? AppColors.backgroundDark
+                            : AppColors.background,
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -826,7 +931,10 @@ class _InboxScreenState extends State<InboxScreen>
                   width: 200,
                   height: 14,
                   decoration: BoxDecoration(
-                    color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+                    color:
+                        _settingsState.isDarkMode
+                            ? AppColors.backgroundDark
+                            : AppColors.background,
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -835,7 +943,10 @@ class _InboxScreenState extends State<InboxScreen>
                   width: 150,
                   height: 14,
                   decoration: BoxDecoration(
-                    color: _settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+                    color:
+                        _settingsState.isDarkMode
+                            ? AppColors.backgroundDark
+                            : AppColors.background,
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -862,10 +973,7 @@ class _InboxScreenState extends State<InboxScreen>
 
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-      ),
+      SnackBar(content: Text(message), backgroundColor: AppColors.error),
     );
   }
 
@@ -876,20 +984,22 @@ class _InboxScreenState extends State<InboxScreen>
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BlocProvider.value(
-                value: context.read<EmailBloc>(),
-                child: ComposeEmailScreen(user: widget.user),
-              ),
+              builder:
+                  (context) => BlocProvider.value(
+                    value: context.read<EmailBloc>(),
+                    child: ComposeEmailScreen(user: widget.user),
+                  ),
             ),
           );
         } else {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BlocProvider.value(
-                value: context.read<EmailBloc>(),
-                child: ComposeEmailScreen(user: widget.user),
-              ),
+              builder:
+                  (context) => BlocProvider.value(
+                    value: context.read<EmailBloc>(),
+                    child: ComposeEmailScreen(user: widget.user),
+                  ),
             ),
           );
         }
