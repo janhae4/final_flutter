@@ -84,7 +84,7 @@ class _ComposeEmailScreenState extends State<ComposeEmailScreen>
 
   void _onFieldChanged() {
     _autoSaveTimer?.cancel();
-    _autoSaveTimer = Timer(const Duration(seconds: 5), () {
+    _autoSaveTimer = Timer(const Duration(seconds: 60), () {
       _isDraft = true;
       _sendEmail(true);
     });
