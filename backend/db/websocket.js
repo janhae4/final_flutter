@@ -12,12 +12,13 @@ const initSocket = (server) => {
         cors: {
             origin: "*",
             methods: ["GET", "POST"]
-        }
+        },
+        transports: ['websocket'], 
     });
 
     io.use((socket, next) => {
         const token = socket.handshake.auth.token;
-
+        console.log('Received token:', token);
         if (!token) {
             return next(new Error('Authentication error'));
         }
