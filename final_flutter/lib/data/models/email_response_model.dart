@@ -44,6 +44,35 @@ class EmailResponseModel {
     );
   }
 
+  EmailResponseModel copyWith({
+    String? id,
+    String? sender,
+    String? subject,
+    String? plainTextContent,
+    String? htmlContent,
+    DateTime? createdAt,
+    bool? isRead,
+    bool? starred,
+    int? attachmentsCount,
+    List<Map<String, dynamic>>? labels,
+    bool? isInTrash,
+  }) {
+    return EmailResponseModel(
+      id ?? this.id,
+      sender ?? this.sender,
+      subject ?? this.subject,
+      plainTextContent ?? this.plainTextContent,
+      attachments,
+      attachmentsCount ?? this.attachmentsCount,
+      labels ?? this.labels,
+      starred ?? this.starred,
+      isRead ?? this.isRead,
+      isDraft,
+      isInTrash ?? this.isInTrash,
+      createdAt ?? this.createdAt,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'sender': sender,

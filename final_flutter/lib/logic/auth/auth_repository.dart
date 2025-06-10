@@ -10,13 +10,27 @@ import 'package:http_parser/http_parser.dart';
 
 class AuthRepository {
   final String backendUrl = 'https://final-flutter.onrender.com/api/auth';
+  final String backendUrl2 = 'https://final-flutter-ml.onrender.com/';
+
+  Future<void> checkHealth () async {
+    try {
+      await http.get(Uri.parse(backendUrl2));
+      await http.get(Uri.parse(backendUrl));
+    } catch (e) {
+      throw Exception('Failed to check health');
+    }
+  }
 
   Future<UserModel?> getCurrentUser(String token) async {
     final res = await http.get(
       Uri.parse('$backendUrl/profile'),
       headers: {'Authorization': 'Bearer $token'},
     );
-    if (res.statusCode == 200) {
+    final res2 = await http.get(
+      Uri.parse(backendUrl2)
+    );
+    print("res2: ${res2.statusCode}");
+    if (res.statusCode == 200 && res2.statusCode == 200) {
       final json = jsonDecode(res.body);
       return UserModel.fromJson(json['user']);
     }
@@ -326,7 +340,7 @@ class AuthRepository {
     final res = await http.post(
       Uri.parse('$backendUrl/recovery-password'),
       headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
-      body: jsonEncode({'otp': otp}),
+      body: jsonEncode({'otp': otp ?? ''}),
     );
     if (res.statusCode != 200) {
       final errorMessage =

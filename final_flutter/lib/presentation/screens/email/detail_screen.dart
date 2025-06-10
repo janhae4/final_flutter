@@ -17,7 +17,13 @@ import 'package:final_flutter/presentation/screens/email/compose_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_quill/flutter_quill.dart' show Document, QuillController, QuillEditor, QuillEditorConfig, QuillEditorConfigurations;
+import 'package:flutter_quill/flutter_quill.dart'
+    show
+        Document,
+        QuillController,
+        QuillEditor,
+        QuillEditorConfig,
+        QuillEditorConfigurations;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -130,8 +136,12 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
-            settingsState.isDarkMode ? AppColors.primaryLight : AppColors.primaryDark,
+            settingsState.isDarkMode
+                ? AppColors.primaryDark
+                : AppColors.primary,
+            settingsState.isDarkMode
+                ? AppColors.primaryLight
+                : AppColors.primaryDark,
           ],
         ),
       ),
@@ -141,7 +151,9 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           children: [
             CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(
-                settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.surface,
               ),
               strokeWidth: 3,
             ),
@@ -149,7 +161,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
             Text(
               'Loading email...',
               style: TextStyle(
-                color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.surface,
                 fontSize: settingsState.fontSize,
                 fontWeight: FontWeight.w500,
                 fontFamily: settingsState.fontFamily,
@@ -168,8 +183,12 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
-            settingsState.isDarkMode ? AppColors.primaryLight : AppColors.primaryDark,
+            settingsState.isDarkMode
+                ? AppColors.primaryDark
+                : AppColors.primary,
+            settingsState.isDarkMode
+                ? AppColors.primaryLight
+                : AppColors.primaryDark,
           ],
         ),
       ),
@@ -199,8 +218,12 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((0.2 * 255).toInt()) : AppColors.surface.withAlpha((0.2 * 255).toInt()),
-              settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((0.1 * 255).toInt()) : AppColors.surface.withAlpha((0.1 * 255).toInt()),
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark.withAlpha((0.2 * 255).toInt())
+                  : AppColors.surface.withAlpha((0.2 * 255).toInt()),
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark.withAlpha((0.1 * 255).toInt())
+                  : AppColors.surface.withAlpha((0.1 * 255).toInt()),
             ],
           ),
           borderRadius: const BorderRadius.only(
@@ -237,14 +260,20 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   Widget _buildBackButton(SettingsState settingsState) {
     return Container(
       decoration: BoxDecoration(
-        color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt()) : AppColors.surface.withAlpha((255 * 0.2).toInt()),
+        color:
+            settingsState.isDarkMode
+                ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt())
+                : AppColors.surface.withAlpha((255 * 0.2).toInt()),
         borderRadius: BorderRadius.circular(16),
       ),
       child: IconButton(
         onPressed: () => Navigator.pop(context),
         icon: Icon(
           Icons.arrow_back_ios_new,
-          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.surface,
           size: 20,
         ),
       ),
@@ -255,16 +284,24 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: currentEmail!.starred
-            ? AppColors.warning.withAlpha((255 * 0.3).toInt())
-            : settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt()) : AppColors.surface.withAlpha((255 * 0.2).toInt()),
+        color:
+            currentEmail!.starred
+                ? AppColors.warning.withAlpha((255 * 0.3).toInt())
+                : settingsState.isDarkMode
+                ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt())
+                : AppColors.surface.withAlpha((255 * 0.2).toInt()),
         borderRadius: BorderRadius.circular(16),
       ),
       child: IconButton(
         onPressed: _toggleStar,
         icon: Icon(
           currentEmail!.starred ? Icons.star : Icons.star_border,
-          color: currentEmail!.starred ? AppColors.warning : settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+          color:
+              currentEmail!.starred
+                  ? AppColors.warning
+                  : settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.surface,
           size: 22,
         ),
       ),
@@ -274,37 +311,44 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   Widget _buildMoreButton(SettingsState settingsState) {
     return Container(
       decoration: BoxDecoration(
-        color: settingsState.isDarkMode ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt()) : AppColors.surface.withAlpha((255 * 0.2).toInt()),
+        color:
+            settingsState.isDarkMode
+                ? AppColors.surfaceDark.withAlpha((255 * 0.2).toInt())
+                : AppColors.surface.withAlpha((255 * 0.2).toInt()),
         borderRadius: BorderRadius.circular(16),
       ),
       child: PopupMenuButton<String>(
         icon: Icon(
           Icons.more_vert,
-          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.surface,
         ),
         onSelected: _handleMenuAction,
-        itemBuilder: (context) => [
-          _buildPopupMenuItem(
-            'metadata',
-            _showMetadata ? Icons.visibility_off : Icons.visibility,
-            _showMetadata ? 'Hide details' : 'Show details',
-            settingsState,
-          ),
-          _buildPopupMenuItem(
-            'labels',
-            Icons.label_outline,
-            'Manage labels',
-            settingsState,
-          ),
-          const PopupMenuDivider(),
-          _buildPopupMenuItem(
-            'trash',
-            Icons.delete_outline,
-            'Move to trash',
-            settingsState,
-            isDestructive: true,
-          ),
-        ],
+        itemBuilder:
+            (context) => [
+              _buildPopupMenuItem(
+                'metadata',
+                _showMetadata ? Icons.visibility_off : Icons.visibility,
+                _showMetadata ? 'Hide details' : 'Show details',
+                settingsState,
+              ),
+              _buildPopupMenuItem(
+                'labels',
+                Icons.label_outline,
+                'Manage labels',
+                settingsState,
+              ),
+              const PopupMenuDivider(),
+              _buildPopupMenuItem(
+                'trash',
+                Icons.delete_outline,
+                'Move to trash',
+                settingsState,
+                isDestructive: true,
+              ),
+            ],
       ),
     );
   }
@@ -323,13 +367,23 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           Icon(
             icon,
             size: 20,
-            color: isDestructive ? AppColors.accent : settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+            color:
+                isDestructive
+                    ? AppColors.accent
+                    : settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimary,
           ),
           const SizedBox(width: 12),
           Text(
             text,
             style: TextStyle(
-              color: isDestructive ? AppColors.accent : settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+              color:
+                  isDestructive
+                      ? AppColors.accent
+                      : settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.textPrimary,
               fontSize: settingsState.fontSize,
               fontFamily: settingsState.fontFamily,
             ),
@@ -345,7 +399,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       child: Text(
         currentEmail!.subject.isEmpty ? 'No Subject' : currentEmail!.subject,
         style: TextStyle(
-          color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark
+                  : AppColors.surface,
           fontSize: settingsState.fontSize + 10,
           fontWeight: FontWeight.bold,
           fontFamily: settingsState.fontFamily,
@@ -363,7 +420,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       child: Text(
         'From ${currentEmail!.sender} • ${_formatDate(currentEmail!.time)} • ${currentEmail!.attachments.length} attachment${currentEmail!.attachments.length != 1 ? 's' : ''}',
         style: TextStyle(
-          color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((0.8 * 255).toInt()) : AppColors.surface.withAlpha((0.8 * 255).toInt()),
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.textPrimaryDark.withAlpha((0.8 * 255).toInt())
+                  : AppColors.surface.withAlpha((0.8 * 255).toInt()),
           fontSize: settingsState.fontSize,
           fontWeight: FontWeight.w500,
           fontFamily: settingsState.fontFamily,
@@ -379,7 +439,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
         topRight: Radius.circular(32),
       ),
       child: Container(
-        color: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.backgroundDark
+                : AppColors.background,
         child: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
@@ -428,11 +491,19 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark.withAlpha(
+                        (255 * 0.05).toInt(),
+                      )
+                      : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -457,14 +528,21 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
-            settingsState.isDarkMode ? AppColors.primaryLight : AppColors.primaryDark,
+            settingsState.isDarkMode
+                ? AppColors.primaryDark
+                : AppColors.primary,
+            settingsState.isDarkMode
+                ? AppColors.primaryLight
+                : AppColors.primaryDark,
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: settingsState.isDarkMode ? AppColors.primaryDark.withAlpha((255 * 0.3).toInt()) : AppColors.primary.withAlpha((255 * 0.3).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.primaryDark.withAlpha((255 * 0.3).toInt())
+                    : AppColors.primary.withAlpha((255 * 0.3).toInt()),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -474,7 +552,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
         child: Text(
           currentEmail!.sender.substring(0, 1).toUpperCase(),
           style: TextStyle(
-            color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.surface,
             fontSize: settingsState.fontSize + 6,
             fontWeight: FontWeight.bold,
             fontFamily: settingsState.fontFamily,
@@ -493,7 +574,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           style: TextStyle(
             fontSize: settingsState.fontSize + 2,
             fontWeight: FontWeight.w600,
-            color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textPrimaryDark
+                    : AppColors.textPrimary,
             fontFamily: settingsState.fontFamily,
           ),
         ),
@@ -502,7 +586,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           'to ${currentEmail!.to.join(', ')}',
           style: TextStyle(
             fontSize: settingsState.fontSize,
-            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textPrimary.withAlpha((255 * 0.8).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textPrimary.withAlpha((255 * 0.8).toInt()),
             fontFamily: settingsState.fontFamily,
           ),
         ),
@@ -511,7 +598,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           DateFormat('MMM d, yyyy at h:mm a').format(currentEmail!.time),
           style: TextStyle(
             fontSize: settingsState.fontSize - 2,
-            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textPrimary.withAlpha((255 * 0.8).toInt()),
+            color:
+                settingsState.isDarkMode
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textPrimary.withAlpha((255 * 0.8).toInt()),
             fontFamily: settingsState.fontFamily,
           ),
         ),
@@ -573,11 +663,19 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark.withAlpha(
+                        (255 * 0.05).toInt(),
+                      )
+                      : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -621,11 +719,19 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark.withAlpha(
+                        (255 * 0.05).toInt(),
+                      )
+                      : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -639,7 +745,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                 Icon(
                   Icons.attach_file,
                   size: 20,
-                  color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+                  color:
+                      settingsState.isDarkMode
+                          ? AppColors.primaryDark
+                          : AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -647,31 +756,43 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                   style: TextStyle(
                     fontSize: settingsState.fontSize,
                     fontWeight: FontWeight.w600,
-                    color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary,
                     fontFamily: settingsState.fontFamily,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
-            ...currentEmail!.attachments
-                .map((attachment) => _buildAttachmentItem(attachment, settingsState))
-                ,
+            ...currentEmail!.attachments.map(
+              (attachment) => _buildAttachmentItem(attachment, settingsState),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAttachmentItem(EmailAttachment attachment, SettingsState settingsState) {
+  Widget _buildAttachmentItem(
+    EmailAttachment attachment,
+    SettingsState settingsState,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.backgroundDark
+                : AppColors.background,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surfaceVariant,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark
+                  : AppColors.surfaceVariant,
         ),
       ),
       child: Row(
@@ -687,7 +808,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                   style: TextStyle(
                     fontSize: settingsState.fontSize,
                     fontWeight: FontWeight.w500,
-                    color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary,
                     fontFamily: settingsState.fontFamily,
                   ),
                 ),
@@ -696,7 +820,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                   _getFileType(attachment.name),
                   style: TextStyle(
                     fontSize: settingsState.fontSize - 2,
-                    color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.textSecondaryDark
+                            : AppColors.textSecondary,
                     fontFamily: settingsState.fontFamily,
                   ),
                 ),
@@ -709,7 +836,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     );
   }
 
-  Widget _buildAttachmentIcon(EmailAttachment attachment, SettingsState settingsState) {
+  Widget _buildAttachmentIcon(
+    EmailAttachment attachment,
+    SettingsState settingsState,
+  ) {
     IconData icon;
     Color color;
 
@@ -728,7 +858,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       color = AppColors.info;
     } else {
       icon = Icons.insert_drive_file;
-      color = settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary;
+      color =
+          settingsState.isDarkMode
+              ? AppColors.textSecondaryDark
+              : AppColors.textSecondary;
     }
 
     return Container(
@@ -741,7 +874,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     );
   }
 
-  Widget _buildDownloadButton(EmailAttachment attachment, SettingsState settingsState) {
+  Widget _buildDownloadButton(
+    EmailAttachment attachment,
+    SettingsState settingsState,
+  ) {
     return IconButton(
       onPressed: () {
         if (kIsWeb) {
@@ -753,7 +889,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       },
       icon: Icon(
         Icons.download,
-        color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+        color:
+            settingsState.isDarkMode
+                ? AppColors.primaryDark
+                : AppColors.primary,
         size: 20,
       ),
     );
@@ -773,11 +912,19 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark.withAlpha(
+                        (255 * 0.05).toInt(),
+                      )
+                      : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -791,7 +938,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                 Icon(
                   Icons.forum_outlined,
                   size: 20,
-                  color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+                  color:
+                      settingsState.isDarkMode
+                          ? AppColors.primaryDark
+                          : AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -799,7 +949,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                   style: TextStyle(
                     fontSize: settingsState.fontSize,
                     fontWeight: FontWeight.w600,
-                    color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary,
                     fontFamily: settingsState.fontFamily,
                   ),
                 ),
@@ -815,90 +968,154 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
 
   Widget _buildConversationMessage(SettingsState settingsState) {
     return Column(
-      children: threadEmail!.map((email) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: settingsState.isDarkMode ? AppColors.backgroundDark : AppColors.background,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surfaceVariant,
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
-                      settingsState.isDarkMode ? AppColors.primaryLight : AppColors.primaryDark,
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Center(
-                  child: Text(
-                    email.sender!.substring(0, 1).toUpperCase(),
-                    style: TextStyle(
-                      color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
-                      fontSize: settingsState.fontSize,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: settingsState.fontFamily,
-                    ),
-                  ),
+      children:
+          threadEmail!.map((email) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.backgroundDark
+                        : AppColors.background,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color:
+                      settingsState.isDarkMode
+                          ? AppColors.surfaceDark
+                          : AppColors.surfaceVariant,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          email.sender!,
-                          style: TextStyle(
-                            fontSize: settingsState.fontSize,
-                            fontWeight: FontWeight.w600,
-                            color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
-                            fontFamily: settingsState.fontFamily,
-                          ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          settingsState.isDarkMode
+                              ? AppColors.primaryDark
+                              : AppColors.primary,
+                          settingsState.isDarkMode
+                              ? AppColors.primaryLight
+                              : AppColors.primaryDark,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        email.sender!.substring(0, 1).toUpperCase(),
+                        style: TextStyle(
+                          color:
+                              settingsState.isDarkMode
+                                  ? AppColors.textPrimaryDark
+                                  : AppColors.surface,
+                          fontSize: settingsState.fontSize,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: settingsState.fontFamily,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          DateFormat('MMM d, h:mm a').format(email.createdAt!),
-                          style: TextStyle(
-                            fontSize: settingsState.fontSize - 2,
-                            color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                            fontFamily: settingsState.fontFamily,
-                          ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              email.sender!,
+                              style: TextStyle(
+                                fontSize: settingsState.fontSize,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    settingsState.isDarkMode
+                                        ? AppColors.textPrimaryDark
+                                        : AppColors.textPrimary,
+                                fontFamily: settingsState.fontFamily,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              DateFormat(
+                                'MMM d, h:mm a',
+                              ).format(email.createdAt!),
+                              style: TextStyle(
+                                fontSize: settingsState.fontSize - 2,
+                                color:
+                                    settingsState.isDarkMode
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondary,
+                                fontFamily: settingsState.fontFamily,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Text(
+                              email.plainTextContent!.trim().isEmpty
+                                  ? 'No content.'
+                                  : email.plainTextContent!.trim(),
+                              style: TextStyle(
+                                fontSize: settingsState.fontSize,
+                                color:
+                                    settingsState.isDarkMode
+                                        ? AppColors.textSecondaryDark
+                                        : AppColors.textSecondary,
+                                height: 1.5,
+                                fontFamily: settingsState.fontFamily,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            (email.attachmentsCount) > 0
+                                ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.info.withAlpha(
+                                      (255 * 0.1).toInt(),
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.attach_file,
+                                        size: 14,
+                                        color: AppColors.info,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${email.attachmentsCount ?? 0}',
+                                        style: TextStyle(
+                                          fontSize: settingsState.fontSize - 4,
+                                          fontFamily: settingsState.fontFamily,
+                                          color: AppColors.info,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                                : SizedBox(),
+                          ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      email.plainTextContent!.trim().isEmpty
-                          ? 'This message contains formatted content or attachments.'
-                          : email.plainTextContent!.trim(),
-                      style: TextStyle(
-                        fontSize: settingsState.fontSize,
-                        color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
-                        height: 1.5,
-                        fontFamily: settingsState.fontFamily,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
     );
   }
 
@@ -910,15 +1127,21 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     }
 
     if (currentEmail!.starred) {
-      badges.add(_buildStatusBadge('Starred', const Color(0xFFF59E0B), settingsState));
+      badges.add(
+        _buildStatusBadge('Starred', const Color(0xFFF59E0B), settingsState),
+      );
     }
 
     if (currentEmail!.isDraft) {
-      badges.add(_buildStatusBadge('Draft', const Color(0xFF6B7280), settingsState));
+      badges.add(
+        _buildStatusBadge('Draft', const Color(0xFF6B7280), settingsState),
+      );
     }
 
     if (currentEmail!.isInTrash) {
-      badges.add(_buildStatusBadge('In Trash', const Color(0xFFEF4444), settingsState));
+      badges.add(
+        _buildStatusBadge('In Trash', const Color(0xFFEF4444), settingsState),
+      );
     } else {
       badges.add(_buildStatusBadge('Normal', AppColors.info, settingsState));
     }
@@ -937,7 +1160,11 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     );
   }
 
-  Widget _buildStatusBadge(String label, Color color, SettingsState settingsState) {
+  Widget _buildStatusBadge(
+    String label,
+    Color color,
+    SettingsState settingsState,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -970,11 +1197,19 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: settingsState.isDarkMode ? AppColors.surfaceDark : AppColors.surface,
+          color:
+              settingsState.isDarkMode
+                  ? AppColors.surfaceDark
+                  : AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark.withAlpha((255 * 0.05).toInt()) : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark.withAlpha(
+                        (255 * 0.05).toInt(),
+                      )
+                      : AppColors.textPrimary.withAlpha((255 * 0.05).toInt()),
               blurRadius: 20,
               offset: const Offset(0, 8),
             ),
@@ -988,7 +1223,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                 Icon(
                   Icons.info_outline,
                   size: 20,
-                  color: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+                  color:
+                      settingsState.isDarkMode
+                          ? AppColors.primaryDark
+                          : AppColors.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -996,7 +1234,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                   style: TextStyle(
                     fontSize: settingsState.fontSize,
                     fontWeight: FontWeight.w600,
-                    color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                    color:
+                        settingsState.isDarkMode
+                            ? AppColors.textPrimaryDark
+                            : AppColors.textPrimary,
                     fontFamily: settingsState.fontFamily,
                   ),
                 ),
@@ -1006,12 +1247,22 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
             _buildMetadataRow('From', currentEmail!.sender, settingsState),
             _buildMetadataRow('To', currentEmail!.to.join(', '), settingsState),
             if (currentEmail!.cc.isNotEmpty)
-              _buildMetadataRow('CC', currentEmail!.cc.join(', '), settingsState),
+              _buildMetadataRow(
+                'CC',
+                currentEmail!.cc.join(', '),
+                settingsState,
+              ),
             if (currentEmail!.bcc.isNotEmpty)
-              _buildMetadataRow('BCC', currentEmail!.bcc.join(', '), settingsState),
+              _buildMetadataRow(
+                'BCC',
+                currentEmail!.bcc.join(', '),
+                settingsState,
+              ),
             _buildMetadataRow(
               'Date',
-              DateFormat('EEEE, MMMM d, y \'at\' h:mm a').format(currentEmail!.time),
+              DateFormat(
+                'EEEE, MMMM d, y \'at\' h:mm a',
+              ).format(currentEmail!.time),
               settingsState,
             ),
             _buildMetadataRow('Subject', currentEmail!.subject, settingsState),
@@ -1021,7 +1272,11 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     );
   }
 
-  Widget _buildMetadataRow(String label, String value, SettingsState settingsState) {
+  Widget _buildMetadataRow(
+    String label,
+    String value,
+    SettingsState settingsState,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1034,7 +1289,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
               style: TextStyle(
                 fontSize: settingsState.fontSize,
                 fontWeight: FontWeight.w500,
-                color: settingsState.isDarkMode ? AppColors.textSecondaryDark : AppColors.textSecondary,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textSecondaryDark
+                        : AppColors.textSecondary,
                 fontFamily: settingsState.fontFamily,
               ),
             ),
@@ -1044,7 +1302,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
               value,
               style: TextStyle(
                 fontSize: settingsState.fontSize,
-                color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.textPrimary,
+                color:
+                    settingsState.isDarkMode
+                        ? AppColors.textPrimaryDark
+                        : AppColors.textPrimary,
                 fontFamily: settingsState.fontFamily,
               ),
             ),
@@ -1066,7 +1327,10 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
             backgroundColor: AppColors.info,
             child: Icon(
               Icons.reply,
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.surface,
             ),
           ),
           const SizedBox(height: 8),
@@ -1076,17 +1340,26 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
             backgroundColor: AppColors.secondary,
             child: Icon(
               Icons.forward,
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.surface,
             ),
           ),
           const SizedBox(height: 8),
           FloatingActionButton(
             heroTag: "compose",
             onPressed: _composeNewEmail,
-            backgroundColor: settingsState.isDarkMode ? AppColors.primaryDark : AppColors.primary,
+            backgroundColor:
+                settingsState.isDarkMode
+                    ? AppColors.primaryDark
+                    : AppColors.primary,
             child: Icon(
               Icons.edit,
-              color: settingsState.isDarkMode ? AppColors.textPrimaryDark : AppColors.surface,
+              color:
+                  settingsState.isDarkMode
+                      ? AppColors.textPrimaryDark
+                      : AppColors.surface,
             ),
           ),
         ],
@@ -1203,12 +1476,11 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
           (context) => BlocListener<EmailBloc, EmailState>(
             listener: (context, state) {
               if (state is EmailDetailLoaded) {
-                // Email được cập nhật → gọi setState của dialog để redraw lại
                 setState(() {
                   currentEmail = state.emailThread.email;
                 });
                 if (setStateDialog != null) {
-                  setStateDialog!(() {}); // rebuild dialog
+                  setStateDialog!(() {});
                 }
               }
             },
@@ -1218,8 +1490,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
                 width: 300,
                 child: StatefulBuilder(
                   builder: (context, setStateSB) {
-                    setStateDialog =
-                        setStateSB; // giữ lại để dùng trong BlocListener
+                    setStateDialog = setStateSB;
 
                     return ListView.separated(
                       shrinkWrap: true,

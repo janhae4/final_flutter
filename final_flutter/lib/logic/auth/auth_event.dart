@@ -6,6 +6,8 @@ abstract class AuthEvent {}
 
 class AppStarted extends AuthEvent {}
 
+class CheckHealthEvent extends AuthEvent {}
+
 class LoginRequested extends AuthEvent {
   final String phone;
   final String password;

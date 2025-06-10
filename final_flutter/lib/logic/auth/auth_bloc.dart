@@ -7,6 +7,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository repository;
 
   AuthBloc(this.repository) : super(AuthInitial()) {
+    on <CheckHealthEvent> ((event, emit) async {
+      try {
+        await repository.checkHealth();
+        emit(AuthHealthCheckSuccess());
+      } catch (e) {
+        emit(AuthHealthCheckFailure(e.toString()));
+      }
+    });
+
     on<AppStarted>((event, emit) async {
       final token = await repository.getToken();
 
@@ -204,7 +213,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<PasswordRecovery>((event, emit) async {
       try {
         final password = await repository.recoveryPassword(event.otp!);
-        emit(UpdateSuccess("Password recovery email sent successfully"));
         emit(PasswordRecoverySuccess(password));
       } catch (e) {
         emit(UpdateError(e.toString()));

@@ -433,11 +433,11 @@ class _InboxScreenState extends State<InboxScreen>
                     const Spacer(),
                     IconButton(
                       icon: Icon(
-                        (email.starred ?? false)
+                        (email.starred)
                             ? Icons.star
                             : Icons.star_border,
                         color:
-                            (email.starred ?? false)
+                            (email.starred)
                                 ? AppColors.starColor
                                 : (settingsState.isDarkMode
                                     ? AppColors.textTertiaryDark
@@ -477,7 +477,7 @@ class _InboxScreenState extends State<InboxScreen>
                       onSelected: (value) {
                         if (value.startsWith("label_")) {
                           final l = widget.labels!.firstWhere((l) => l.id == value.substring(6));
-                          _handleEmailAction(email, value.substring(6), l);
+                          _handleEmailAction(email, "label", l);
                         } else {
                           _handleEmailAction(email, value, null);
                         }
@@ -555,7 +555,7 @@ class _InboxScreenState extends State<InboxScreen>
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        if ((email.labels ?? [])
+                                        if ((email.labels)
                                             .map((l) => l['_id'])
                                             .contains(label.id))
                                           Icon(
@@ -586,11 +586,11 @@ class _InboxScreenState extends State<InboxScreen>
                               height: 48,
                               child: _buildActionItem(
                                 icon:
-                                    (email.isRead ?? false)
+                                    (email.isRead)
                                         ? Icons.mark_email_unread_rounded
                                         : Icons.mark_email_read_rounded,
                                 text:
-                                    (email.isRead ?? false)
+                                    (email.isRead)
                                         ? 'Mark as unread'
                                         : 'Mark as read',
                                 color: AppColors.primary,
@@ -607,7 +607,7 @@ class _InboxScreenState extends State<InboxScreen>
                               ),
                             ),
 
-                            (email.isInTrash ?? false)
+                            (email.isInTrash)
                                 ? PopupMenuItem(
                                   value: 'restore',
                                   height: 48,
@@ -868,7 +868,6 @@ class _InboxScreenState extends State<InboxScreen>
         context.read<EmailBloc>().add(AddLabelToEmail(email.id!, label!));
         break;
       case 'mark_read':
-        print('READ');
         context.read<EmailBloc>().add(
           MarkEmailAsRead(email.id!, !email.isRead),
         );
@@ -987,6 +986,7 @@ class _InboxScreenState extends State<InboxScreen>
 
   Widget _buildFloatingActionButton() {
     return FloatingActionButton(
+      key: UniqueKey(),
       onPressed: () {
         if (widget.tabIndex == 3) {
           Navigator.push(

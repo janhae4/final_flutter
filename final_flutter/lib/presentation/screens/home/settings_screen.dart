@@ -143,7 +143,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 end: Alignment.bottomRight,
                 colors: [
                   AppColors.primary,
-                  AppColors.primaryDark.withOpacity(0.8),
+                  AppColors.primaryDark.withValues(alpha: .8),
                 ],
               ),
               borderRadius: const BorderRadius.only(
@@ -218,7 +218,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: (state.isDarkMode
                     ? AppColors.textPrimaryDark
                     : AppColors.textPrimary)
-                .withOpacity(0.05),
+                .withValues(alpha: .05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -278,7 +278,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: .1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, color: color, size: 24),
@@ -313,7 +313,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
+          color: AppColors.primary.withValues(alpha: .1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Icon(
@@ -345,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+          border: Border.all(color: AppColors.primary.withValues(alpha: .3)),
           borderRadius: BorderRadius.circular(8),
         ),
         child: DropdownButton<double>(
@@ -383,7 +383,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: AppColors.secondary.withOpacity(0.1),
+          color: AppColors.secondary.withValues(alpha: .1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: const Icon(
@@ -415,7 +415,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.secondary.withOpacity(0.3)),
+          border: Border.all(color: AppColors.secondary.withValues(alpha: .3)),
           borderRadius: BorderRadius.circular(8),
         ),
         child: DropdownButton<String>(
@@ -470,9 +470,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.05),
+              color: AppColors.accent.withValues(alpha: .05),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.accent.withOpacity(0.2)),
+              border: Border.all(color: AppColors.accent.withValues(alpha: .2)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,7 +511,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide(
-                        color: AppColors.accent.withOpacity(0.3),
+                        color: AppColors.accent.withValues(alpha: .3),
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
@@ -527,7 +527,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         color: (state.isDarkMode
                                 ? AppColors.borderDark
                                 : AppColors.surfaceVariant)
-                            .withOpacity(0.3),
+                            .withValues(alpha: .3),
                       ),
                     ),
                     filled: true,

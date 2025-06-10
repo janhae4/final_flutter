@@ -24,7 +24,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     required EmailRepository emailRepository,
     required NotificationBloc notificationBloc,
     required SettingsBloc settingsBloc,
-    required AuthBloc authBloc
+    required AuthBloc authBloc,
   }) : _emailRepository = emailRepository,
        _notificationBloc = notificationBloc,
        _settingsBloc = settingsBloc,
@@ -176,7 +176,7 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
     Emitter<EmailState> emit,
   ) async {
     final currentState = state;
-    print('event.id: ${event.id}');
+    print('Current state: $currentState');
     await _emailRepository.markRead(event.id);
     await _notificationService.markAsRead(event.id);
 
@@ -231,11 +231,15 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
           cc: [],
           bcc: [],
           subject: 'Re: ${event.email.subject ?? ''}',
-          content: [settingsState.autoAnswerContent],
+          content: [{
+            "insert": "${settingsState.autoAnswerContent}\n"
+          }],
           plainTextContent: settingsState.autoAnswerContent,
           time: DateTime.now(),
           attachments: [],
           labels: [],
+          isReplied: true,
+          originalEmailId: event.email.id ?? "",
         );
         await _emailRepository.sendEmail(autoAnswerEmail);
       }
@@ -300,16 +304,48 @@ class EmailBloc extends Bloc<EmailEvent, EmailState> {
   ) async {
     final currentState = state;
     if (currentState is EmailLoaded) {
-      emit(EmailLoading());
-      await _emailRepository.addLabelToEmail(event.emailId, event.label);
-      final emails = await _getEmailsForCurrentTab(currentState.currentTab);
-      emit(currentState.copyWith(emails: emails));
+      try {
+        await _emailRepository.addLabelToEmail(event.emailId, event.label);
+
+        final updatedEmails =
+            currentState.emails.map((email) {
+              if (email.id == event.emailId) {
+                final currentLabels = List<Map<String, dynamic>>.from(
+                  email.labels,
+                );
+
+                final labelExists = currentLabels.any(
+                  (l) => l['_id'] == event.label.id,
+                );
+
+                if (labelExists) {
+                  currentLabels.removeWhere((l) => l['_id'] == event.label.id);
+                } else {
+                  currentLabels.add({
+                    '_id': event.label.id,
+                    'label': event.label.label,
+                  });
+                }
+
+                return email.copyWith(labels: currentLabels);
+              }
+              return email;
+            }).toList();
+
+        emit(currentState.copyWith(emails: updatedEmails));
+      } catch (error) {
+        emit(EmailError(error.toString()));
+      }
     }
+
     if (currentState is EmailDetailLoaded) {
-      emit(EmailLoading());
-      await _emailRepository.addLabelToEmail(event.emailId, event.label);
-      final email = await _emailRepository.getEmailDetail(event.emailId);
-      emit(EmailDetailLoaded(email));
+      try {
+        await _emailRepository.addLabelToEmail(event.emailId, event.label);
+        final email = await _emailRepository.getEmailDetail(event.emailId);
+        emit(EmailDetailLoaded(email));
+      } catch (error) {
+        emit(EmailError(error.toString()));
+      }
     }
   }
 

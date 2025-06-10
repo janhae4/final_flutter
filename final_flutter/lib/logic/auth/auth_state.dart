@@ -3,6 +3,13 @@ import 'package:final_flutter/data/models/user_model.dart';
 
 abstract class AuthState {}
 
+class AuthHealthCheckSuccess extends AuthState {}
+
+class AuthHealthCheckFailure extends AuthState {
+  final String error;
+  AuthHealthCheckFailure(this.error);
+}
+
 class AuthInitial extends AuthState {}
 
 class AuthLoading extends AuthState {}
