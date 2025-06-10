@@ -474,6 +474,14 @@ class _InboxScreenState extends State<InboxScreen>
                           size: 20,
                         ),
                       ),
+                      onSelected: (value) {
+                        if (value.startsWith("label_")) {
+                          final l = widget.labels!.firstWhere((l) => l.id == value.substring(6));
+                          _handleEmailAction(email, value.substring(6), l);
+                        } else {
+                          _handleEmailAction(email, value, null);
+                        }
+                      },
                       itemBuilder:
                           (context) => [
                             if (widget.labels != null &&
