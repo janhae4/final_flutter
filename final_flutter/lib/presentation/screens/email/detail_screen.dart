@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:js_interop';
+// import 'dart:js_interop';
 
 import 'package:final_flutter/config/app_theme.dart';
 import 'package:final_flutter/data/models/email.dart';
@@ -27,7 +27,7 @@ import 'package:flutter_quill/flutter_quill.dart'
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:web/web.dart' as html;
+// import 'package:web/web.dart' as html;
 
 class EmailDetailScreen extends StatefulWidget {
   final UserModel? user;
@@ -880,12 +880,12 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   ) {
     return IconButton(
       onPressed: () {
-        if (kIsWeb) {
-          downloadAttachmentWeb(attachment);
-        } else {
-          downloadAttachment(attachment);
-        }
-        // downloadAttachment(attachment);
+        // if (kIsWeb) {
+        //   downloadAttachmentWeb(attachment);
+        // } else {
+        //   downloadAttachment(attachment);
+        // }
+        downloadAttachment(attachment);
       },
       icon: Icon(
         Icons.download,
@@ -1614,19 +1614,19 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     }
   }
 
-  void downloadAttachmentWeb(EmailAttachment attachment) {
-    final bytes = base64Decode(attachment.bytes!);
-    final blob = html.Blob([bytes] as JSArray<html.BlobPart>);
-    final url = html.URL.createObjectURL(blob);
-    final anchor = html.document.createElement('a') as html.HTMLAnchorElement;
-    anchor.href = url;
-    anchor.style.display = 'none';
-    anchor.download = attachment.name;
-    html.document.body!.append(anchor);
-    anchor.click();
-    html.document.body!.removeChild(anchor);
-    html.URL.revokeObjectURL(url);
-  }
+  // void downloadAttachmentWeb(EmailAttachment attachment) {
+  //   final bytes = base64Decode(attachment.bytes!);
+  //   final blob = html.Blob([bytes] as JSArray<html.BlobPart>);
+  //   final url = html.URL.createObjectURL(blob);
+  //   final anchor = html.document.createElement('a') as html.HTMLAnchorElement;
+  //   anchor.href = url;
+  //   anchor.style.display = 'none';
+  //   anchor.download = attachment.name;
+  //   html.document.body!.append(anchor);
+  //   anchor.click();
+  //   html.document.body!.removeChild(anchor);
+  //   html.URL.revokeObjectURL(url);
+  // }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
