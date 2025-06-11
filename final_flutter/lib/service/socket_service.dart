@@ -31,6 +31,7 @@ class EmailSocketService {
 
   void listenForEmails(Function(EmailResponseModel) onNewEmail) {
     socket.on('new_email', (data) {
+      print('New email received: $data');
       final email = EmailResponseModel.fromJson(data);
       print(email.toJson());
       onNewEmail(email);

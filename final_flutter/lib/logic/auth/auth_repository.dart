@@ -110,7 +110,7 @@ class AuthRepository {
     }
 
     final json = jsonDecode(res.body);
-    return {'qrCode': json['qrCode'], 'secretKey': json['manualEntryKey']};
+    return {'secretKey': json['manualEntryKey']};
   }
 
   Future<void> disable2FA(String password, String code) async {

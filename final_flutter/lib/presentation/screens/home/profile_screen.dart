@@ -107,7 +107,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (state is QRCodeGenerated) {
             _showTwoStepVerificationDialog(
               context,
-              state.qrCodeUrl,
               state.entryKey,
             );
           }
@@ -538,10 +537,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showTwoStepVerificationDialog(
     BuildContext rootContext,
-    String qrCodeUrl,
     String entryKey,
   ) {
-    final qrBytes = base64Decode(qrCodeUrl.split(',').last);
     final maskedKey = _getMaskedKey(entryKey);
     print(entryKey);
 
@@ -610,7 +607,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     width: 200,
                                     height: 200,
                                     child: QrImageView(
-                                      data: entryKey,
+                                      data: 'otpauth://totp/GMAIL%20SIMULATOR?secret=$entryKey',
                                       backgroundColor: Colors.transparent,
                                       eyeStyle: QrEyeStyle(
                                         eyeShape: QrEyeShape.circle,
@@ -1266,7 +1263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 user?.avatarUrl != null &&
                                 user!.avatarUrl!.isNotEmpty)
                             ? NetworkImage(
-                              'http://localhost:3000/${user!.avatarUrl!}',
+                              'https://final-flutter.onrender.com/${user!.avatarUrl!}',
                             )
                             : null,
                     child:
@@ -1315,18 +1312,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 20),
             Text(
               user?.email ?? 'email@gmailcom',
-              style: TextStyle(fontSize: 16, color: AppColors.surface),
+              style: TextStyle(fontSize: settingState!.fontSize - 2, color: AppColors.surface),
+              
             ),
             const SizedBox(height: 10),
             Text(
               user?.name ?? 'User Name',
               style: TextStyle(
-                fontSize: 24,
+                fontSize: settingState!.fontSize + 2,
                 fontWeight: FontWeight.bold,
-                color:
-                    settingState!.isDarkMode
-                        ? AppColors.surfaceVariant
-                        : AppColors.textPrimary,
+                color: AppColors.surface,
               ),
             ),
             const SizedBox(height: 4),
