@@ -111,12 +111,10 @@ exports.setup2FA = async (userId) => {
         issuer: '2FA App'
     });
 
-    const qrCodeUrl = await QRCode.toDataURL(secret.otpauth_url);
     user.twoFactorSecret = secret.base32;
     await user.save();
 
     return {
-        qrCode: qrCodeUrl,
         manualEntryKey: secret.base32
     };
 };

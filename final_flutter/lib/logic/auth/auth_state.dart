@@ -44,9 +44,8 @@ class TwoFactorRequired extends AuthState {
 }
 
 class QRCodeGenerated extends AuthState {
-  final String qrCodeUrl;
   final String entryKey;
-  QRCodeGenerated(this.qrCodeUrl, this.entryKey);
+  QRCodeGenerated(this.entryKey);
 }
 
 class TwoFactorDisabled extends AuthState {}

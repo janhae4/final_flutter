@@ -1184,6 +1184,9 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
   }
 
   Widget _buildMetadataCard(SettingsState settingsState) {
+    print(
+      'CC: ${currentEmail!.cc}, BCC: ${currentEmail!.bcc}, Condition: ${currentEmail!.cc!.isEmpty}, ${currentEmail!.bcc!.isEmpty}',
+    );
     return SlideTransition(
       position: Tween<Offset>(
         begin: const Offset(0, 0.5),
@@ -1244,20 +1247,21 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
               ],
             ),
             const SizedBox(height: 16),
-            _buildMetadataRow('From', currentEmail!.sender, settingsState),
-            _buildMetadataRow('To', currentEmail!.to.join(', '), settingsState),
-            if (currentEmail!.cc.isNotEmpty)
+            if (currentEmail!.bcc.isNotEmpty) ...[
+              _buildMetadataRow('To', 'Me', settingsState),
+            ] else ...[
               _buildMetadataRow(
-                'CC',
-                currentEmail!.cc.join(', '),
+                'To',
+                currentEmail!.to.join(', '),
                 settingsState,
               ),
-            if (currentEmail!.bcc.isNotEmpty)
-              _buildMetadataRow(
-                'BCC',
-                currentEmail!.bcc.join(', '),
-                settingsState,
-              ),
+              if (currentEmail!.cc.isNotEmpty)
+                _buildMetadataRow(
+                  'Cc',
+                  currentEmail!.cc.join(', '),
+                  settingsState,
+                ),
+            ],
             _buildMetadataRow(
               'Date',
               DateFormat(
@@ -1277,6 +1281,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
     String value,
     SettingsState settingsState,
   ) {
+    print('Building metadata row: $label, $value');
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -1322,6 +1327,7 @@ class _EmailDetailScreenState extends State<EmailDetailScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           FloatingActionButton.small(
+            key: UniqueKey(),
             heroTag: "reply",
             onPressed: _replyToEmail,
             backgroundColor: AppColors.info,

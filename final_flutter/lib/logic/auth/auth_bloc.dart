@@ -77,7 +77,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthLoading());
       try {
         final response = await repository.generateQr();
-        emit(QRCodeGenerated(response['qrCode']!, response['secretKey']!));
+        emit(QRCodeGenerated(response['secretKey']!));
       } catch (e) {
         emit(AuthError(e.toString()));
         emit(Unauthenticated());
