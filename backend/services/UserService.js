@@ -115,7 +115,6 @@ exports.setup2FA = async (userId) => {
     await user.save();
 
     return {
-        qrCode: secret.otpauth_url,
         manualEntryKey: secret.base32
     };
 };
